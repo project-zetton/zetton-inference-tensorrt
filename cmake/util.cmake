@@ -1,10 +1,14 @@
 # add executables with project library
 macro(add_simple_excutable dirname name)
+  include(GNUInstallDirs)
+
   add_executable(${dirname}_${name}
                  ${CMAKE_CURRENT_SOURCE_DIR}/${dirname}/${name}.cc)
   target_link_libraries(${dirname}_${name} ${PROJECT_NAME})
+
   install(TARGETS ${dirname}_${name}
           RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  install(TARGETS ${dirname}_${name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endmacro()
 
 macro(add_simple_excutables dirname)
@@ -25,11 +29,12 @@ endmacro()
 
 # add tests with project library
 macro(add_simple_test dirname name)
+  include(GNUInstallDirs)
   add_executable(${dirname}_${name}
                  ${CMAKE_CURRENT_SOURCE_DIR}/test/${dirname}/${name}.cc)
   target_link_libraries(${dirname}_${name} ${PROJECT_NAME} gtest_main)
   add_test(NAME ${dirname}_${name} COMMAND ${dirname}_${name})
-  # install(TARGETS ${name} DESTINATION bin)
+  install(TARGETS ${dirname}_${name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endmacro()
 
 macro(add_tests_in_dir dirname)

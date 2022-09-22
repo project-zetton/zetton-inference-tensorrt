@@ -114,8 +114,7 @@ zetton_cc_library(
   DEPS
   Threads::Threads
   zetton_common::zetton_common
-  zetton_inference::zetton_inference
-)
+  zetton_inference::zetton_inference)
 
 # -------------------#
 # Executable targets #
@@ -126,4 +125,10 @@ add_simple_examples()
 # -------------#
 # Test targets #
 # -------------#
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.12.1)
+FetchContent_MakeAvailable(googletest)
 add_tests_in_dir("inference")

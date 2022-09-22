@@ -28,8 +28,9 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
 
   ACHECK_F(options.model_format == InferenceFrontendType::kSerialized ||
                options.model_format == InferenceFrontendType::kONNX,
-           "TrtBackend only support model format of ModelFormat::PADDLE / "
-           "ModelFormat::ONNX.");
+           "TrtBackend only support model format of {} and {}.",
+           ToString(InferenceFrontendType::kSerialized),
+           ToString(InferenceFrontendType::kONNX));
 
   if (options.model_format == InferenceFrontendType::kSerialized) {
     ACHECK_F(InitFromSerialized(tensorrt_options),
@@ -95,6 +96,9 @@ bool TensorRTInferenceBackend::CreateTrtEngine() {
           options_.serialize_file);
       fin.close();
       return LoadTrtCache(options_.serialize_file);
+    } else {
+      AERROR_F("Failed to open serialized TensorRT Engine file: {}",
+               options_.serialize_file);
     }
   } else {
     AFATAL_F(
