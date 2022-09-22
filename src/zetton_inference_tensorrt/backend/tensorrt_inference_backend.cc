@@ -3,15 +3,18 @@
 namespace zetton {
 namespace inference {
 
-TensorRTInferenceBackend::TensorRTInferenceBackend(
-    const TensorRTInferenceBackendInitOptions& init_options) {}
+int TensorRTInferenceBackend::NumInputs() const { return -1; }
 
-bool TensorRTInferenceBackend::Init(
-    const std::map<std::string, std::vector<int>>& shapes) {
+int TensorRTInferenceBackend::NumOutputs() const { return -1; }
+
+TensorInfo TensorRTInferenceBackend::GetInputInfo(int index) { return {}; }
+
+TensorInfo TensorRTInferenceBackend::GetOutputInfo(int index) { return {}; }
+
+bool TensorRTInferenceBackend::Infer(std::vector<Tensor>& inputs,
+                                     std::vector<Tensor>* outputs) {
   return false;
 }
-
-void TensorRTInferenceBackend::Infer() {}
 
 ZETTON_REGISTER_INFERENCE_BACKEND(TensorRTInferenceBackend)
 

@@ -5,17 +5,13 @@
 namespace zetton {
 namespace inference {
 
-struct TensorRTInferenceBackendInitOptions {};
-
 class TensorRTInferenceBackend : public BaseInferenceBackend {
  public:
-  TensorRTInferenceBackend(
-      const TensorRTInferenceBackendInitOptions& init_options =
-          TensorRTInferenceBackendInitOptions());
-
- public:
-  bool Init(const std::map<std::string, std::vector<int>>& shapes) final;
-  void Infer() final;
+  int NumInputs() const final;
+  int NumOutputs() const final;
+  TensorInfo GetInputInfo(int index) final;
+  TensorInfo GetOutputInfo(int index) final;
+  bool Infer(std::vector<Tensor>& inputs, std::vector<Tensor>* outputs) final;
 };
 
 }  // namespace inference
