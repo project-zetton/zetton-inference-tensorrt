@@ -1,6 +1,6 @@
 #include "zetton_inference_tensorrt/backend/tensorrt/util.h"
 
-#include <zetton_common/log/log.h>
+#include "zetton_common/log/log.h"
 
 namespace zetton {
 namespace inference {
