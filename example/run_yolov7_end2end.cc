@@ -28,8 +28,9 @@ int main(int argc, char** argv) {
   // print result
   AINFO_F("Detected {} objects", result.boxes.size());
   for (std::size_t i = 0; i < result.boxes.size(); ++i) {
-    AINFO_F("label: {}, score: {}, box: {}", result.label_ids[i],
-            result.scores[i], absl::StrJoin(result.boxes[i], " "));
+    AINFO_F("-> label: {}, score: {}, bbox: {} {} {} {}", result.label_ids[i],
+            result.scores[i], result.boxes[i][0], result.boxes[i][1],
+            result.boxes[i][2], result.boxes[i][3]);
   }
 
   return 0;

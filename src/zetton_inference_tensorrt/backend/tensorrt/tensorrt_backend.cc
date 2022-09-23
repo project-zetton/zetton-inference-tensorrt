@@ -1,5 +1,6 @@
 #include "zetton_inference_tensorrt/backend/tensorrt/tensorrt_backend.h"
 
+#include <NvInferPlugin.h>
 #include <zetton_inference/base/type.h>
 
 #include <fstream>
@@ -125,6 +126,11 @@ bool TensorRTInferenceBackend::LoadTrtCache(
     AERROR_F("Failed to call createInferRuntime().");
     return false;
   }
+
+  // workaround to disable plugin initialization
+  // refer to https://github.com/onnx/onnx-tensorrt/issues/597
+  initLibNvInferPlugins(nullptr, "");
+
   engine_ = std::shared_ptr<nvinfer1::ICudaEngine>(
       runtime->deserializeCudaEngine(engine_buffer.data(),
                                      engine_buffer.size()),

@@ -45,6 +45,7 @@ project(
 # ----------------------#
 
 find_package(Threads)
+find_package(CUDA REQUIRED)
 
 # -----------------#
 # Zetton libraries #
@@ -112,6 +113,9 @@ zetton_cc_library(
   SRCS
   ${src_files}
   DEPS
+  nvinfer
+  nvinfer_plugin
+  nvparsers
   Threads::Threads
   zetton_common::zetton_common
   zetton_inference::zetton_inference)
