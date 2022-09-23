@@ -33,5 +33,14 @@ int main(int argc, char** argv) {
             result.boxes[i][2], result.boxes[i][3]);
   }
 
+  // print benchmark
+  zetton::inference::vision::DetectionResult temp_result;
+  detector->EnableRecordTimeOfRuntime();
+  for (auto i = 0; i < 100; ++i) {
+    detector->Predict(&image, &temp_result);
+  }
+  detector->DisableRecordTimeOfRuntime();
+  detector->PrintStatisInfoOfRuntime();
+
   return 0;
 }
