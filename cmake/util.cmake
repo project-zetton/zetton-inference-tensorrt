@@ -20,25 +20,25 @@ macro(add_simple_excutables dirname)
 endmacro()
 
 macro(add_simple_apps)
-  add_simple_excutables("app")
+  add_simple_excutables("apps")
 endmacro()
 
 macro(add_simple_examples)
-  add_simple_excutables("example")
+  add_simple_excutables("examples")
 endmacro()
 
 # add tests with project library
 macro(add_simple_test dirname name)
   include(GNUInstallDirs)
   add_executable(${dirname}_${name}
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test/${dirname}/${name}.cc)
+                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/${dirname}/${name}.cc)
   target_link_libraries(${dirname}_${name} ${PROJECT_NAME} gtest_main)
   add_test(NAME ${dirname}_${name} COMMAND ${dirname}_${name})
   install(TARGETS ${dirname}_${name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endmacro()
 
 macro(add_tests_in_dir dirname)
-  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/test/${dirname}/*.cc")
+  file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/${dirname}/*.cc")
   foreach(file ${files})
     get_filename_component(name ${file} NAME_WE)
     add_simple_test(${dirname} ${name})
