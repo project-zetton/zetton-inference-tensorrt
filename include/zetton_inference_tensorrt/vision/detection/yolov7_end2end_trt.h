@@ -11,6 +11,12 @@ namespace zetton {
 namespace inference {
 namespace vision {
 
+enum class YOLOEnd2EndModelType {
+  kYOLOv5,
+  kYOLOX,
+  kYOLOv7,
+};
+
 /// \brief YOLOv7 end-to-end TensorRT inference model
 class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
  public:
@@ -21,8 +27,10 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \param im input image
   /// \param result output result
   /// \param conf_threshold confidence threshold
-  bool Predict(cv::Mat* im, DetectionResult* result,
-               float conf_threshold = 0.25);
+  /// \param model_type subtype of model
+  bool Predict(
+      cv::Mat* im, DetectionResult* result, float conf_threshold = 0.25,
+      const YOLOEnd2EndModelType& model_type = YOLOEnd2EndModelType::kYOLOv7);
 
   /// \brief name of the inference model
   std::string Name() const override {
@@ -56,8 +64,11 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \param im input image
   /// \param tensor preprocessed tensor
   /// \param im_info image info stored for postprocess
-  bool Preprocess(Mat* mat, Tensor* output,
-                  std::map<std::string, std::array<float, 2>>* im_info);
+  /// \param model_type subtype of model
+  bool Preprocess(
+      Mat* mat, Tensor* output,
+      std::map<std::string, std::array<float, 2>>* im_info,
+      const YOLOEnd2EndModelType& model_type = YOLOEnd2EndModelType::kYOLOv7);
 
   /// \brief do postprocess for the backend inference output and return the
   /// result

@@ -113,7 +113,8 @@ bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
 
 bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
     Mat* mat, Tensor* output,
-    std::map<std::string, std::array<float, 2>>* im_info) {
+    std::map<std::string, std::array<float, 2>>* im_info,
+    const YOLOEnd2EndModelType& subtype) {
   float ratio = std::min(size[1] * 1.0f / static_cast<float>(mat->Height()),
                          size[0] * 1.0f / static_cast<float>(mat->Width()));
   if (ratio != 1.0) {
@@ -127,10 +128,17 @@ bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
   }
   YOLOv7End2EndTensorRTInferenceModel::LetterBox(
       mat, size, padding_value, is_mini_pad, is_no_pad, is_scale_up, stride);
-  BGR2RGB::Run(mat);
-  std::vector<float> alpha = {1.0f / 255.0f, 1.0f / 255.0f, 1.0f / 255.0f};
-  std::vector<float> beta = {0.0f, 0.0f, 0.0f};
-  Normalize::Run(mat, alpha, beta);
+
+  if (subtype == YOLOEnd2EndModelType::kYOLOX) {
+    // not do BGR2RGB and Normalize when using YOLOX models, or we will get
+    // empty predictions according to [this
+    // issue](https://github.com/Linaom1214/TensorRT-For-YOLO-Series/issues/11)
+  } else {
+    BGR2RGB::Run(mat);
+    std::vector<float> alpha = {1.0f / 255.0f, 1.0f / 255.0f, 1.0f / 255.0f};
+    std::vector<float> beta = {0.0f, 0.0f, 0.0f};
+    Normalize::Run(mat, alpha, beta);
+  }
 
   (*im_info)["output_shape"] = {static_cast<float>(mat->Height()),
                                 static_cast<float>(mat->Width())};
@@ -220,9 +228,9 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   return true;
 }
 
-bool YOLOv7End2EndTensorRTInferenceModel::Predict(cv::Mat* im,
-                                                  DetectionResult* result,
-                                                  float conf_threshold) {
+bool YOLOv7End2EndTensorRTInferenceModel::Predict(
+    cv::Mat* im, DetectionResult* result, float conf_threshold,
+    const YOLOEnd2EndModelType& model_type) {
   Mat mat(*im);
   std::vector<Tensor> input_tensors(1);
 
@@ -234,7 +242,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Predict(cv::Mat* im,
   im_info["output_shape"] = {static_cast<float>(mat.Height()),
                              static_cast<float>(mat.Width())};
 
-  if (!Preprocess(&mat, &input_tensors[0], &im_info)) {
+  if (!Preprocess(&mat, &input_tensors[0], &im_info, model_type)) {
     AERROR_F("Failed to preprocess input image.");
     return false;
   }

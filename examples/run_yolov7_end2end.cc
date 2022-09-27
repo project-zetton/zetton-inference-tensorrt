@@ -11,9 +11,11 @@ int main(int argc, char** argv) {
   zetton::inference::InferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
-#if 0
+#if 1
   options.model_format = zetton::inference::InferenceFrontendType::kSerialized;
-  options.SetTensorRTCacheFile("/workspace/model/yolov7-tiny-nms.trt");
+  options.SetCacheFileForTensorRT("/workspace/model/yolov7-tiny-nms.trt");
+  // options.SetCacheFileForTensorRT("/workspace/model/yolov5n-nms.trt");
+  // options.SetCacheFileForTensorRT("/workspace/model/yolox_s-nms.trt");
 #else
   options.model_format = zetton::inference::InferenceFrontendType::kONNX;
   options.SetModelPath("/workspace/model/yolov7-tiny.onnx");
@@ -31,7 +33,8 @@ int main(int argc, char** argv) {
 
   // inference
   zetton::inference::vision::DetectionResult result;
-  detector->Predict(&image, &result);
+  detector->Predict(&image, &result, 0.25,
+                    zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // print result
   AINFO_F("Detected {} objects", result.boxes.size());
