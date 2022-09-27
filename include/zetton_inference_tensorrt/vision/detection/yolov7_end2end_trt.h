@@ -11,35 +11,41 @@ namespace zetton {
 namespace inference {
 namespace vision {
 
+/// \brief YOLOv7 end-to-end TensorRT inference model
 class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
  public:
+  /// \brief initialize the inference model with the given options
   bool Init(const InferenceRuntimeOptions& options) override;
 
-  /// \brief model prediction for end users
+  /// \brief do inference on the given input image
   /// \param im input image
   /// \param result output result
   /// \param conf_threshold confidence threshold
   bool Predict(cv::Mat* im, DetectionResult* result,
                float conf_threshold = 0.25);
 
+  /// \brief name of the inference model
   std::string Name() const override {
     return "YOLOv7End2EndTensorRTInferenceModel";
   }
 
  public:
-  // tuple of (width, height)
+  /// \brief input image size
+  /// \note the input image will be resized to this size
+  /// \details tuple of (width, height)
   std::vector<int> size;
-  // padding value, size should be same with Channels
+  /// \brief padding value, size should be same with Channels
   std::vector<float> padding_value;
-  // only pad to the minimum rectange which height and width is times of stride
+  /// \brief only pad to the minimum rectange which height and width is times of
+  /// stride
   bool is_mini_pad;
-  // while is_mini_pad = false and is_no_pad = true, will resize the image to
-  // the set size
+  /// \brief is_mini_pad = false and is_no_pad = true, will resize the image to
+  /// the set size
   bool is_no_pad;
-  // if is_scale_up is false, the input image only can be zoom out, the maximum
-  // resize scale cannot exceed 1.0
+  /// \brief if is_scale_up is false, the input image only can be zoom out, the
+  /// maximum resize scale cannot exceed 1.0
   bool is_scale_up;
-  // padding stride, for is_mini_pad
+  /// \brief padding stride, for is_mini_pad
   int stride;
 
  private:

@@ -29,21 +29,20 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
 
   ACHECK_F(options.model_format == InferenceFrontendType::kSerialized ||
                options.model_format == InferenceFrontendType::kONNX,
-           "TrtBackend only support model format of {} and {}.",
-           ToString(InferenceFrontendType::kSerialized),
-           ToString(InferenceFrontendType::kONNX));
+           "Unsupported model format: {}", ToString(options.model_format));
 
   if (options.model_format == InferenceFrontendType::kSerialized) {
     ACHECK_F(InitFromSerialized(options_),
-             "Load model from TensorRT Engine failed while initliazing "
-             "TensorRTInferenceBackend.");
+             "Failed to initialize TensorRT inference backend from serialized "
+             "model file: {}",
+             options_.serialize_file);
     return true;
   } else if (options.model_format == InferenceFrontendType::kONNX) {
     ACHECK_F(InitFromONNX(options.model_file, options_),
-             "Load model from ONNX failed while initliazing "
-             "TensorRTInferenceBackend.");
+             "Failed to initialize TensorRT inference backend from ONNX model "
+             "file: {}",
+             options.model_file);
     return true;
-    return false;
   }
 
   return false;
@@ -52,17 +51,18 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
 bool TensorRTInferenceBackend::InitFromSerialized(
     const TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
-    AERROR_F("TrtBackend is already initlized, cannot initialize again.");
+    AERROR_F("TensorRT inference backend has been initialized");
     return false;
   }
   options_ = options;
   cudaSetDevice(options_.gpu_id);
 
   ACHECK_F(cudaStreamCreate(&stream_) == 0,
-           "[ERROR] Error occurs while calling cudaStreamCreate().");
+           "Failed to create CUDA stream for TensorRT inference backend");
 
   if (!CreateTensorRTEngineFromSerialized()) {
-    AERROR_F("Failed to create tensorrt engine.");
+    AERROR_F("Failed to create TensorRT engine from serialized model file: {}",
+             options_.serialize_file);
     return false;
   }
   initialized_ = true;
@@ -73,17 +73,18 @@ bool TensorRTInferenceBackend::InitFromONNX(
     const std::string& model_file,
     const TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
-    AERROR_F("TrtBackend is already initlized, cannot initialize again.");
+    AERROR_F("TensorRT inference backend has been initialized");
     return false;
   }
   options_ = options;
   cudaSetDevice(options_.gpu_id);
 
   ACHECK_F(cudaStreamCreate(&stream_) == 0,
-           "[ERROR] Error occurs while calling cudaStreamCreate().");
+           "Failed to create CUDA stream for TensorRT inference backend");
 
   if (!CreateTensorRTEngineFromONNX(model_file)) {
-    AERROR_F("Failed to create tensorrt engine.");
+    AERROR_F("Failed to create TensorRT engine from ONNX model file: {}",
+             model_file);
     return false;
   }
   initialized_ = true;
@@ -127,10 +128,8 @@ bool TensorRTInferenceBackend::CreateTensorRTEngineFromONNX(
   if (options_.serialize_file != "") {
     std::ifstream fin(options_.serialize_file, std::ios::binary | std::ios::in);
     if (fin) {
-      AINFO_F(
-          "Detect serialized TensorRT Engine file in {}, will load it "
-          "directly.",
-          options_.serialize_file);
+      AINFO_F("Serialized model file already exists: {}, skip building engine",
+              options_.serialize_file);
       fin.close();
       return LoadTensorRTEngineFromSerialized(options_.serialize_file);
     }
@@ -138,7 +137,8 @@ bool TensorRTInferenceBackend::CreateTensorRTEngineFromONNX(
 
   // 2. build engine if serialized file is not found
   if (!BuildTensorRTEngineFromFromONNX()) {
-    AERROR_F("Failed to build tensorrt engine.");
+    AERROR_F("Failed to build TensorRT engine from ONNX model file: {}",
+             model_file);
   }
 
   return true;
@@ -155,9 +155,7 @@ bool TensorRTInferenceBackend::BuildTensorRTEngineFromFromONNX() {
 #endif
   if (options_.enable_fp16) {
     if (!builder_->platformHasFastFp16()) {
-      AWARN_F(
-          "Detected FP16 is not supported in the current GPU, will use FP32 "
-          "instead.");
+      AWARN_F("FP16 is not supported on this platform, use FP32 instead");
     } else {
       config->setFlag(nvinfer1::BuilderFlag::kFP16);
     }
@@ -166,44 +164,36 @@ bool TensorRTInferenceBackend::BuildTensorRTEngineFromFromONNX() {
   // setup profile
   auto profile = builder_->createOptimizationProfile();
   for (const auto& item : options_.min_shape) {
-    ACHECK_F(
-        profile->setDimensions(item.first.c_str(),
-                               nvinfer1::OptProfileSelector::kMIN,
-                               tensorrt::ToDims(item.second)),
-        "[TrtBackend] Failed to set min_shape for input: {} in TrtBackend.",
-        item.first);
+    ACHECK_F(profile->setDimensions(item.first.c_str(),
+                                    nvinfer1::OptProfileSelector::kMIN,
+                                    tensorrt::ToDims(item.second)),
+             "Failed to set min shape for input: {}", item.first);
   }
   for (const auto& item : options_.max_shape) {
-    ACHECK_F(
-        profile->setDimensions(item.first.c_str(),
-                               nvinfer1::OptProfileSelector::kMAX,
-                               tensorrt::ToDims(item.second)),
-        "[TrtBackend] Failed to set max_shape for input: {} in TrtBackend.",
-        item.first);
+    ACHECK_F(profile->setDimensions(item.first.c_str(),
+                                    nvinfer1::OptProfileSelector::kMAX,
+                                    tensorrt::ToDims(item.second)),
+             "Failed to set max shape for input: {}", item.first);
   }
   if (options_.opt_shape.empty()) {
     for (const auto& item : options_.max_shape) {
-      ACHECK_F(
-          profile->setDimensions(item.first.c_str(),
-                                 nvinfer1::OptProfileSelector::kMAX,
-                                 tensorrt::ToDims(item.second)),
-          "[TrtBackend] Failed to set max_shape for input: {} in TrtBackend.",
-          item.first);
+      ACHECK_F(profile->setDimensions(item.first.c_str(),
+                                      nvinfer1::OptProfileSelector::kMAX,
+                                      tensorrt::ToDims(item.second)),
+               "Failed to set opt shape for input: {}", item.first);
     }
   } else {
     for (const auto& item : options_.opt_shape) {
-      ACHECK_F(
-          profile->setDimensions(item.first.c_str(),
-                                 nvinfer1::OptProfileSelector::kOPT,
-                                 tensorrt::ToDims(item.second)),
-          "[TrtBackend] Failed to set opt_shape for input: {} in TrtBackend.",
-          item.first);
+      ACHECK_F(profile->setDimensions(item.first.c_str(),
+                                      nvinfer1::OptProfileSelector::kOPT,
+                                      tensorrt::ToDims(item.second)),
+               "Failed to set opt shape for input: {}", item.first);
     }
   }
   config->addOptimizationProfile(profile);
 
   // build the engine
-  AINFO_F("Start to building TensorRT Engine...");
+  AINFO_F("Building TensorRT engine, this will take a while...");
   if (context_) {
     context_.reset();
     engine_.reset();
@@ -243,11 +233,11 @@ bool TensorRTInferenceBackend::BuildTensorRTEngineFromFromONNX() {
   }
   GetInputOutputInfo();
 
-  AINFO_F("TensorRT Engine is built succussfully.");
+  AINFO_F("TensorRT engine built successfully.");
 
   // save serialized engine
   if (!options_.serialize_file.empty()) {
-    AINFO_F("Serialize TensorRTEngine to local file: {}",
+    AINFO_F("Serialize TensorRT engine to local file: {}",
             options_.serialize_file);
     std::ofstream engine_file(options_.serialize_file.c_str());
     if (!engine_file) {
@@ -256,10 +246,8 @@ bool TensorRTInferenceBackend::BuildTensorRTEngineFromFromONNX() {
     }
     engine_file.write(static_cast<char*>(plan->data()), plan->size());
     engine_file.close();
-    AINFO_F(
-        "TensorRTEngine is serialized to local file {}, we can load this model "
-        "from the seralized engine directly next time.",
-        options_.serialize_file);
+    AINFO_F("Serialized TensorRT engine file saved to: {}",
+            options_.serialize_file);
   }
 
   return true;
@@ -287,8 +275,8 @@ bool TensorRTInferenceBackend::CreateTensorRTEngineFromSerialized() {
     std::ifstream fin(options_.serialize_file, std::ios::binary | std::ios::in);
     if (fin) {
       AINFO_F(
-          "Detect serialized TensorRT Engine file in {}, will load it "
-          "directly.",
+          "TensorRT serialized engine file found, deserialize from local file: "
+          "{}",
           options_.serialize_file);
       fin.close();
       return LoadTensorRTEngineFromSerialized(options_.serialize_file);
@@ -297,9 +285,7 @@ bool TensorRTInferenceBackend::CreateTensorRTEngineFromSerialized() {
                options_.serialize_file);
     }
   } else {
-    AFATAL_F(
-        "No serialized TensorRT Engine file is provided. Other methods are "
-        "not supported yet.");
+    AFATAL_F("Serialized TensorRT engine file is not specified.");
   }
 
   return false;
@@ -339,7 +325,7 @@ bool TensorRTInferenceBackend::LoadTensorRTEngineFromSerialized(
       engine_->createExecutionContext());
   GetInputOutputInfo();
 
-  AINFO_F("Build TensorRT Engine from cache file {}", trt_engine_file);
+  AINFO_F("TensorRT engine loaded successfully.");
 
   return true;
 }
@@ -347,21 +333,21 @@ bool TensorRTInferenceBackend::LoadTensorRTEngineFromSerialized(
 bool TensorRTInferenceBackend::Infer(std::vector<Tensor>& inputs,
                                      std::vector<Tensor>* outputs) {
   if (static_cast<int>(inputs.size()) != NumInputs()) {
-    AERROR_F("Require {} inputs, but get {}.", NumInputs(), inputs.size());
+    AERROR_F("Number of inputs mismatch: {} vs {}", inputs.size(), NumInputs());
     return false;
   }
 
   SetInputs(inputs);
   AllocateOutputsBuffer(outputs);
   if (!context_->enqueueV2(bindings_.data(), stream_, nullptr)) {
-    AERROR_F("Failed to Infer with TensorRT.");
+    AERROR_F("Failed to infer with TensorRT.");
     return false;
   }
   for (auto& output : *outputs) {
     ACHECK_F(
         cudaMemcpyAsync(output.Data(), outputs_buffer_[output.name].data(),
                         output.Nbytes(), cudaMemcpyDeviceToHost, stream_) == 0,
-        "Error occurs while copy memory from GPU to CPU.");
+        "Failed to copy output data from device to host.");
   }
   return true;
 }
@@ -398,8 +384,7 @@ void TensorRTInferenceBackend::SetInputs(const std::vector<Tensor>& inputs) {
       if (item.dtype == InferenceDataType::kINT64) {
         // TODO cast int64 to int32
         // TRT don't support INT64
-        AFATAL_F(
-            "TRT don't support INT64 input on GPU, please use INT32 input");
+        AFATAL_F("TensorRT don't support INT64, use INT32 instead.");
       } else {
         // no copy
         inputs_buffer_[item.name].SetExternalData(dims, item.Data());
@@ -416,12 +401,12 @@ void TensorRTInferenceBackend::SetInputs(const std::vector<Tensor>& inputs) {
                                  static_cast<void*>(casted_data.data()),
                                  item.Nbytes() / 2, cudaMemcpyHostToDevice,
                                  stream_) == 0,
-                 "Error occurs while copy memory from CPU to GPU.");
+                 "Failed to copy input data from host to device.");
       } else {
         ACHECK_F(cudaMemcpyAsync(inputs_buffer_[item.name].data(), item.Data(),
                                  item.Nbytes(), cudaMemcpyHostToDevice,
                                  stream_) == 0,
-                 "Error occurs while copy memory from CPU to GPU.");
+                 "Failed to copy input data from host to device.");
       }
     }
     // binding input buffer
@@ -442,10 +427,9 @@ void TensorRTInferenceBackend::AllocateOutputsBuffer(
     if (!outputs_order_.empty()) {
       // find the original index of output
       auto iter = outputs_order_.find(outputs_desc_[i].name);
-      ACHECK_F(
-          iter != outputs_order_.end(),
-          "Cannot find output: {} of tensorrt network from the original model.",
-          outputs_desc_[i].name);
+      ACHECK_F(iter != outputs_order_.end(),
+               "Failed to find the original index of output: {}.",
+               outputs_desc_[i].name);
     }
     // set user's outputs info
     std::vector<int64_t> shape(output_dims.d,
@@ -461,8 +445,7 @@ void TensorRTInferenceBackend::AllocateOutputsBuffer(
 }
 
 TensorInfo TensorRTInferenceBackend::GetInputInfo(int index) {
-  ACHECK_F(index < NumInputs(),
-           "The index: %d should less than the number of inputs: %d.", index,
+  ACHECK_F(index < NumInputs(), "Input index {} is out of range: {}.", index,
            NumInputs());
   TensorInfo info;
   info.name = inputs_desc_[index].name;
@@ -473,8 +456,7 @@ TensorInfo TensorRTInferenceBackend::GetInputInfo(int index) {
 }
 
 TensorInfo TensorRTInferenceBackend::GetOutputInfo(int index) {
-  ACHECK_F(index < NumOutputs(),
-           "The index: %d should less than the number of outputs: %d.", index,
+  ACHECK_F(index < NumOutputs(), "Output index {} is out of range: {}.", index,
            NumOutputs());
   TensorInfo info;
   info.name = outputs_desc_[index].name;

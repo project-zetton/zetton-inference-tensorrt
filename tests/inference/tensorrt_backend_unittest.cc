@@ -13,7 +13,8 @@ TEST(TensorRTInferenceBackendTest, InitBackend) {
   options.UseTensorRTBackend();
   options.UseGpu();
   options.model_format = zetton::inference::InferenceFrontendType::kSerialized;
-  options.SetTensorRTCacheFile("/workspace/model/yolov3-tiny-416-bs1.engine");
+  options.SetCacheFileForTensorRT(
+      "/workspace/model/yolov3-tiny-416-bs1.engine");
   EXPECT_EQ(backend->Init(options), true);
   EXPECT_EQ(backend->Initialized(), true);
 }

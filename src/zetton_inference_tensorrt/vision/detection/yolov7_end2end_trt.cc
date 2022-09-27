@@ -194,7 +194,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   auto iter_out = im_info.find("output_shape");
   auto iter_ipt = im_info.find("input_shape");
   ACHECK_F(iter_out != im_info.end() && iter_ipt != im_info.end(),
-           "Cannot find input_shape or output_shape from im_info.");
+           "Failed to find output_shape or input_shape in im_info.");
   float out_h = iter_out->second[0];
   float out_w = iter_out->second[1];
   float ipt_h = iter_ipt->second[0];
@@ -206,16 +206,16 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
     pad_h = static_cast<float>(static_cast<int>(pad_h) % stride);
     pad_w = static_cast<float>(static_cast<int>(pad_w) % stride);
   }
-  for (size_t i = 0; i < result->boxes.size(); ++i) {
+  for (auto& boxe : result->boxes) {
     // int32_t label_id = (result->label_ids)[i];
-    result->boxes[i][0] = std::max((result->boxes[i][0] - pad_w) / scale, 0.0f);
-    result->boxes[i][1] = std::max((result->boxes[i][1] - pad_h) / scale, 0.0f);
-    result->boxes[i][2] = std::max((result->boxes[i][2] - pad_w) / scale, 0.0f);
-    result->boxes[i][3] = std::max((result->boxes[i][3] - pad_h) / scale, 0.0f);
-    result->boxes[i][0] = std::min(result->boxes[i][0], ipt_w - 1.0f);
-    result->boxes[i][1] = std::min(result->boxes[i][1], ipt_h - 1.0f);
-    result->boxes[i][2] = std::min(result->boxes[i][2], ipt_w - 1.0f);
-    result->boxes[i][3] = std::min(result->boxes[i][3], ipt_h - 1.0f);
+    boxe[0] = std::max((boxe[0] - pad_w) / scale, 0.0f);
+    boxe[1] = std::max((boxe[1] - pad_h) / scale, 0.0f);
+    boxe[2] = std::max((boxe[2] - pad_w) / scale, 0.0f);
+    boxe[3] = std::max((boxe[3] - pad_h) / scale, 0.0f);
+    boxe[0] = std::min(boxe[0], ipt_w - 1.0f);
+    boxe[1] = std::min(boxe[1], ipt_h - 1.0f);
+    boxe[2] = std::min(boxe[2], ipt_w - 1.0f);
+    boxe[3] = std::min(boxe[3], ipt_h - 1.0f);
   }
   return true;
 }
@@ -242,12 +242,12 @@ bool YOLOv7End2EndTensorRTInferenceModel::Predict(cv::Mat* im,
   input_tensors[0].name = InputInfoOfRuntime(0).name;
   std::vector<Tensor> output_tensors;
   if (!Infer(input_tensors, &output_tensors)) {
-    AERROR_F("Failed to inference.");
+    AERROR_F("Failed to do inference.");
     return false;
   }
 
   if (!Postprocess(output_tensors, result, im_info, conf_threshold)) {
-    AERROR_F("Failed to post process.");
+    AERROR_F("Failed to do post process.");
     return false;
   }
 

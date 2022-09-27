@@ -3,6 +3,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "zetton_inference/vision/base/result.h"
+#include "zetton_inference/vision/util/visualize.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
 int main(int argc, char** argv) {
@@ -16,7 +17,7 @@ int main(int argc, char** argv) {
 #else
   options.model_format = zetton::inference::InferenceFrontendType::kONNX;
   options.SetModelPath("/workspace/model/yolov7-tiny.onnx");
-  options.SetTensorRTCacheFile(
+  options.SetCacheFileForTensorRT(
       "/workspace/model/yolov7-tiny-nms-from-onnx.trt");
 #endif
 
@@ -39,6 +40,11 @@ int main(int argc, char** argv) {
             result.scores[i], result.boxes[i][0], result.boxes[i][1],
             result.boxes[i][2], result.boxes[i][3]);
   }
+
+  // draw and save result
+  auto viz = zetton::inference::vision::Visualization();
+  auto result_image = viz.Visualize(image, result);
+  cv::imwrite("predictions.png", result_image);
 
   // print benchmark
   zetton::inference::vision::DetectionResult temp_result;
