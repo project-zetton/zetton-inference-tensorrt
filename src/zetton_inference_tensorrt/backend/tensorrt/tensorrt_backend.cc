@@ -346,7 +346,7 @@ bool TensorRTInferenceBackend::LoadTensorRTEngineFromSerialized(
 
 bool TensorRTInferenceBackend::Infer(std::vector<Tensor>& inputs,
                                      std::vector<Tensor>* outputs) {
-  if (inputs.size() != NumInputs()) {
+  if (static_cast<int>(inputs.size()) != NumInputs()) {
     AERROR_F("Require {} inputs, but get {}.", NumInputs(), inputs.size());
     return false;
   }
@@ -357,12 +357,11 @@ bool TensorRTInferenceBackend::Infer(std::vector<Tensor>& inputs,
     AERROR_F("Failed to Infer with TensorRT.");
     return false;
   }
-  for (size_t i = 0; i < outputs->size(); ++i) {
-    ACHECK_F(cudaMemcpyAsync((*outputs)[i].Data(),
-                             outputs_buffer_[(*outputs)[i].name].data(),
-                             (*outputs)[i].Nbytes(), cudaMemcpyDeviceToHost,
-                             stream_) == 0,
-             "Error occurs while copy memory from GPU to CPU.");
+  for (auto& output : *outputs) {
+    ACHECK_F(
+        cudaMemcpyAsync(output.Data(), outputs_buffer_[output.name].data(),
+                        output.Nbytes(), cudaMemcpyDeviceToHost, stream_) == 0,
+        "Error occurs while copy memory from GPU to CPU.");
   }
   return true;
 }

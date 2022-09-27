@@ -45,7 +45,6 @@ project(
 # ----------------------#
 
 find_package(Threads)
-find_package(CUDA REQUIRED)
 
 # -----------------#
 # Zetton libraries #

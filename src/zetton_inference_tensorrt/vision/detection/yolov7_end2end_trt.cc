@@ -98,7 +98,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
   // shape after padding (LetterBox) when the is_dynamic_shape is 'false'.
   is_dynamic_input_ = false;
   auto shape = InputInfoOfRuntime(0).shape;
-  for (int i = 0; i < shape.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(shape.size()); ++i) {
     // if height or width is dynamic
     if (i >= 2 && shape[i] <= 0) {
       is_dynamic_input_ = true;
@@ -170,7 +170,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   }
   result->Clear();
   result->Reserve(num_dets_after_trt_nms);
-  for (size_t i = 0; i < num_dets_after_trt_nms; ++i) {
+  for (int i = 0; i < num_dets_after_trt_nms; ++i) {
     float confidence = scores_data[i];
     if (confidence <= conf_threshold) {
       continue;
