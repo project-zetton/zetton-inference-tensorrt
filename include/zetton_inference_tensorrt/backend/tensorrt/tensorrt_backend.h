@@ -65,10 +65,15 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
 
  private:
   void GetInputOutputInfo();
-  bool CreateTrtEngine();
-  bool LoadTrtCache(const std::string& trt_engine_file);
   void SetInputs(const std::vector<Tensor>& inputs);
   void AllocateOutputsBuffer(std::vector<Tensor>* outputs);
+
+ private:
+  bool CreateTensorRTEngineFromSerialized();
+  bool CreateTensorRTEngineFromONNX(const std::string& model_file);
+
+  bool LoadTensorRTEngineFromSerialized(const std::string& trt_engine_file);
+  bool BuildTensorRTEngineFromFromONNX();
 
  private:
   TensorRTInferenceBackendOptions options_;

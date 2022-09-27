@@ -10,8 +10,15 @@ int main(int argc, char** argv) {
   zetton::inference::InferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
+#if 0
   options.model_format = zetton::inference::InferenceFrontendType::kSerialized;
   options.SetTensorRTCacheFile("/workspace/model/yolov7-tiny-nms.trt");
+#else
+  options.model_format = zetton::inference::InferenceFrontendType::kONNX;
+  options.SetModelPath("/workspace/model/yolov7-tiny.onnx");
+  options.SetTensorRTCacheFile(
+      "/workspace/model/yolov7-tiny-nms-from-onnx.trt");
+#endif
 
   // init detector
   auto detector = std::make_shared<

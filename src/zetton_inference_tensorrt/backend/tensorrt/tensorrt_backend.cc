@@ -1,5 +1,6 @@
 #include "zetton_inference_tensorrt/backend/tensorrt/tensorrt_backend.h"
 
+#include <NvInfer.h>
 #include <NvInferPlugin.h>
 #include <zetton_inference/base/type.h>
 
@@ -16,16 +17,15 @@ namespace inference {
 tensorrt::Logger* tensorrt::Logger::logger = nullptr;
 
 bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
-  auto tensorrt_options = TensorRTInferenceBackendOptions();
-  tensorrt_options.gpu_id = options.device_id;
-  tensorrt_options.enable_fp16 = options.trt_enable_fp16;
-  tensorrt_options.enable_int8 = options.trt_enable_int8;
-  tensorrt_options.max_batch_size = options.trt_max_batch_size;
-  tensorrt_options.max_workspace_size = options.trt_max_workspace_size;
-  tensorrt_options.max_shape = options.trt_max_shape;
-  tensorrt_options.min_shape = options.trt_min_shape;
-  tensorrt_options.opt_shape = options.trt_opt_shape;
-  tensorrt_options.serialize_file = options.trt_serialize_file;
+  options_.gpu_id = options.device_id;
+  options_.enable_fp16 = options.trt_enable_fp16;
+  options_.enable_int8 = options.trt_enable_int8;
+  options_.max_batch_size = options.trt_max_batch_size;
+  options_.max_workspace_size = options.trt_max_workspace_size;
+  options_.max_shape = options.trt_max_shape;
+  options_.min_shape = options.trt_min_shape;
+  options_.opt_shape = options.trt_opt_shape;
+  options_.serialize_file = options.trt_serialize_file;
 
   ACHECK_F(options.model_format == InferenceFrontendType::kSerialized ||
                options.model_format == InferenceFrontendType::kONNX,
@@ -34,16 +34,15 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
            ToString(InferenceFrontendType::kONNX));
 
   if (options.model_format == InferenceFrontendType::kSerialized) {
-    ACHECK_F(InitFromSerialized(tensorrt_options),
+    ACHECK_F(InitFromSerialized(options_),
              "Load model from TensorRT Engine failed while initliazing "
              "TensorRTInferenceBackend.");
     return true;
   } else if (options.model_format == InferenceFrontendType::kONNX) {
-    AFATAL_F("Not implemented yet.");
-    // ACHECK_F(InitFromOnnx(options.model_file, trt_option),
-    //          "Load model from ONNX failed while initliazing "
-    //          "TensorRTInferenceBackend.");
-    // return true;
+    ACHECK_F(InitFromONNX(options.model_file, options_),
+             "Load model from ONNX failed while initliazing "
+             "TensorRTInferenceBackend.");
+    return true;
     return false;
   }
 
@@ -62,7 +61,7 @@ bool TensorRTInferenceBackend::InitFromSerialized(
   ACHECK_F(cudaStreamCreate(&stream_) == 0,
            "[ERROR] Error occurs while calling cudaStreamCreate().");
 
-  if (!CreateTrtEngine()) {
+  if (!CreateTensorRTEngineFromSerialized()) {
     AERROR_F("Failed to create tensorrt engine.");
     return false;
   }
@@ -73,49 +72,200 @@ bool TensorRTInferenceBackend::InitFromSerialized(
 bool TensorRTInferenceBackend::InitFromONNX(
     const std::string& model_file,
     const TensorRTInferenceBackendOptions& options) {
-  // create the builder
-  nvinfer1::IBuilder* builder =
-      nvinfer1::createInferBuilder(*tensorrt::Logger().Get());
-  assert(builder != nullptr);
-
-  const auto explicitBatch =
-      1U << static_cast<uint32_t>(
-          nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-  auto network = builder->createNetworkV2(explicitBatch);
-  auto config = builder->createBuilderConfig();
-
-  auto parser = nvonnxparser::createParser(*network, *tensorrt::Logger().Get());
-  if (!parser->parseFromFile(
-          model_file.c_str(),
-          static_cast<int>(nvinfer1::ILogger::Severity::kINFO))) {
-    AERROR_F("Failure while parsing ONNX file: {}", model_file);
+  if (initialized_) {
+    AERROR_F("TrtBackend is already initlized, cannot initialize again.");
+    return false;
   }
-  // Build the engine
-  builder->setMaxBatchSize(options_.max_batch_size);
-  config->setMaxWorkspaceSize(options_.max_workspace_size);
-  config->setFlag(nvinfer1::BuilderFlag::kFP16);
+  options_ = options;
+  cudaSetDevice(options_.gpu_id);
 
-  AINFO_F("start building engine");
-  engine_.reset(builder->buildEngineWithConfig(*network, *config));
-  AINFO_F("build engine done");
-  assert(engine);
-  // we can destroy the parser
-  parser->destroy();
-  // save engine
-  nvinfer1::IHostMemory* data = engine_->serialize();
-  std::ofstream file;
-  file.open(options_.serialize_file, std::ios::binary | std::ios::out);
-  AINFO_F("writing engine file to {}", options_.serialize_file);
-  file.write((const char*)data->data(), data->size());
-  AINFO_F("save engine file done");
-  file.close();
-  // then close everything down
-  network->destroy();
-  builder->destroy();
+  ACHECK_F(cudaStreamCreate(&stream_) == 0,
+           "[ERROR] Error occurs while calling cudaStreamCreate().");
+
+  if (!CreateTensorRTEngineFromONNX(model_file)) {
+    AERROR_F("Failed to create tensorrt engine.");
+    return false;
+  }
+  initialized_ = true;
   return true;
 }
 
-bool TensorRTInferenceBackend::CreateTrtEngine() {
+bool TensorRTInferenceBackend::CreateTensorRTEngineFromONNX(
+    const std::string& model_file) {
+  // 0. initialization
+  // 0.1. init builder
+  builder_.reset(nvinfer1::createInferBuilder(*tensorrt::Logger().Get()));
+  if (!builder_) {
+    AERROR_F("Failed to call createInferBuilder().");
+    return false;
+  }
+
+  // 0.2. init network
+  const auto explicitBatch =
+      1U << static_cast<uint32_t>(
+          nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+  network_.reset(builder_->createNetworkV2(explicitBatch));
+  if (!network_) {
+    AERROR_F("Failed to call createNetworkV2().");
+    return false;
+  }
+
+  // 0.3. init parser
+  parser_.reset(
+      nvonnxparser::createParser(*network_, *tensorrt::Logger().Get()));
+  if (!parser_) {
+    AERROR_F("Failed to call createParser().");
+    return false;
+  }
+  if (!parser_->parseFromFile(
+          model_file.c_str(),
+          static_cast<int>(nvinfer1::ILogger::Severity::kINFO))) {
+    AERROR_F("Failed to parse ONNX model by TensorRT: {}", model_file);
+  }
+
+  // 1. check whether the model is already serialized
+  if (options_.serialize_file != "") {
+    std::ifstream fin(options_.serialize_file, std::ios::binary | std::ios::in);
+    if (fin) {
+      AINFO_F(
+          "Detect serialized TensorRT Engine file in {}, will load it "
+          "directly.",
+          options_.serialize_file);
+      fin.close();
+      return LoadTensorRTEngineFromSerialized(options_.serialize_file);
+    }
+  }
+
+  // 2. build engine if serialized file is not found
+  if (!BuildTensorRTEngineFromFromONNX()) {
+    AERROR_F("Failed to build tensorrt engine.");
+  }
+
+  return true;
+}
+
+bool TensorRTInferenceBackend::BuildTensorRTEngineFromFromONNX() {
+  // setup config
+  auto config = builder_->createBuilderConfig();
+#if NV_TENSORRT_MAJOR < 8
+  config->setMaxWorkspaceSize(options_.max_workspace_size);
+#else
+  config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE,
+                             options_.max_workspace_size);
+#endif
+  if (options_.enable_fp16) {
+    if (!builder_->platformHasFastFp16()) {
+      AWARN_F(
+          "Detected FP16 is not supported in the current GPU, will use FP32 "
+          "instead.");
+    } else {
+      config->setFlag(nvinfer1::BuilderFlag::kFP16);
+    }
+  }
+
+  // setup profile
+  auto profile = builder_->createOptimizationProfile();
+  for (const auto& item : options_.min_shape) {
+    ACHECK_F(
+        profile->setDimensions(item.first.c_str(),
+                               nvinfer1::OptProfileSelector::kMIN,
+                               tensorrt::ToDims(item.second)),
+        "[TrtBackend] Failed to set min_shape for input: {} in TrtBackend.",
+        item.first);
+  }
+  for (const auto& item : options_.max_shape) {
+    ACHECK_F(
+        profile->setDimensions(item.first.c_str(),
+                               nvinfer1::OptProfileSelector::kMAX,
+                               tensorrt::ToDims(item.second)),
+        "[TrtBackend] Failed to set max_shape for input: {} in TrtBackend.",
+        item.first);
+  }
+  if (options_.opt_shape.empty()) {
+    for (const auto& item : options_.max_shape) {
+      ACHECK_F(
+          profile->setDimensions(item.first.c_str(),
+                                 nvinfer1::OptProfileSelector::kMAX,
+                                 tensorrt::ToDims(item.second)),
+          "[TrtBackend] Failed to set max_shape for input: {} in TrtBackend.",
+          item.first);
+    }
+  } else {
+    for (const auto& item : options_.opt_shape) {
+      ACHECK_F(
+          profile->setDimensions(item.first.c_str(),
+                                 nvinfer1::OptProfileSelector::kOPT,
+                                 tensorrt::ToDims(item.second)),
+          "[TrtBackend] Failed to set opt_shape for input: {} in TrtBackend.",
+          item.first);
+    }
+  }
+  config->addOptimizationProfile(profile);
+
+  // build the engine
+  AINFO_F("Start to building TensorRT Engine...");
+  if (context_) {
+    context_.reset();
+    engine_.reset();
+  }
+  builder_->setMaxBatchSize(options_.max_batch_size);
+
+  tensorrt::UniquePtr<nvinfer1::IHostMemory> plan{
+      builder_->buildSerializedNetwork(*network_, *config)};
+  if (!plan) {
+    AERROR_F("Failed to call buildSerializedNetwork().");
+    return false;
+  }
+
+  // init runtime
+  tensorrt::UniquePtr<nvinfer1::IRuntime> runtime{
+      nvinfer1::createInferRuntime(*tensorrt::Logger::Get())};
+  if (!runtime) {
+    AERROR_F("Failed to call createInferRuntime().");
+    return false;
+  }
+
+  // init engine
+  engine_ = std::shared_ptr<nvinfer1::ICudaEngine>(
+      runtime->deserializeCudaEngine(plan->data(), plan->size()),
+      tensorrt::InferDeleter());
+  if (!engine_) {
+    AERROR_F("Failed to call deserializeCudaEngine().");
+    return false;
+  }
+
+  // init context
+  context_ = std::shared_ptr<nvinfer1::IExecutionContext>(
+      engine_->createExecutionContext());
+  if (!context_) {
+    AERROR_F("Failed to call createExecutionContext().");
+    return false;
+  }
+  GetInputOutputInfo();
+
+  AINFO_F("TensorRT Engine is built succussfully.");
+
+  // save serialized engine
+  if (!options_.serialize_file.empty()) {
+    AINFO_F("Serialize TensorRTEngine to local file: {}",
+            options_.serialize_file);
+    std::ofstream engine_file(options_.serialize_file.c_str());
+    if (!engine_file) {
+      AERROR_F("Failed to open {} to write.", options_.serialize_file);
+      return false;
+    }
+    engine_file.write(static_cast<char*>(plan->data()), plan->size());
+    engine_file.close();
+    AINFO_F(
+        "TensorRTEngine is serialized to local file {}, we can load this model "
+        "from the seralized engine directly next time.",
+        options_.serialize_file);
+  }
+
+  return true;
+}
+
+bool TensorRTInferenceBackend::CreateTensorRTEngineFromSerialized() {
   const auto explicitBatch =
       1U << static_cast<uint32_t>(
           nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
@@ -141,7 +291,7 @@ bool TensorRTInferenceBackend::CreateTrtEngine() {
           "directly.",
           options_.serialize_file);
       fin.close();
-      return LoadTrtCache(options_.serialize_file);
+      return LoadTensorRTEngineFromSerialized(options_.serialize_file);
     } else {
       AERROR_F("Failed to open serialized TensorRT Engine file: {}",
                options_.serialize_file);
@@ -155,7 +305,7 @@ bool TensorRTInferenceBackend::CreateTrtEngine() {
   return false;
 }
 
-bool TensorRTInferenceBackend::LoadTrtCache(
+bool TensorRTInferenceBackend::LoadTensorRTEngineFromSerialized(
     const std::string& trt_engine_file) {
   cudaSetDevice(options_.gpu_id);
 
