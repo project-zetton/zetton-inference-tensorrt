@@ -161,10 +161,9 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
            "The dtype of det_classes_tensor must be INT32.");
   ACHECK_F(num_tensor.shape[0] == 1, "Only support batch=1 now.");
   // post-process for end2end yolov7 after trt nms.
-  float* boxes_data = static_cast<float*>(boxes_tensor.Data());    // (1,100,4)
-  float* scores_data = static_cast<float*>(scores_tensor.Data());  // (1,100)
-  int32_t* classes_data =
-      static_cast<int32_t*>(classes_tensor.Data());  // (1,100)
+  auto* boxes_data = static_cast<float*>(boxes_tensor.Data());    // (1,100,4)
+  auto* scores_data = static_cast<float*>(scores_tensor.Data());  // (1,100)
+  auto* classes_data = static_cast<int32_t*>(classes_tensor.Data());  // (1,100)
   int32_t num_dets_after_trt_nms = static_cast<int32_t*>(num_tensor.Data())[0];
   if (num_dets_after_trt_nms == 0) {
     return true;
@@ -208,7 +207,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
     pad_w = static_cast<float>(static_cast<int>(pad_w) % stride);
   }
   for (size_t i = 0; i < result->boxes.size(); ++i) {
-    int32_t label_id = (result->label_ids)[i];
+    // int32_t label_id = (result->label_ids)[i];
     result->boxes[i][0] = std::max((result->boxes[i][0] - pad_w) / scale, 0.0f);
     result->boxes[i][1] = std::max((result->boxes[i][1] - pad_h) / scale, 0.0f);
     result->boxes[i][2] = std::max((result->boxes[i][2] - pad_w) / scale, 0.0f);

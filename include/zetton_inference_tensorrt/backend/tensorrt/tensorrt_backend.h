@@ -51,7 +51,10 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
  public:
   bool Init(const InferenceRuntimeOptions& options) override;
   bool InitFromSerialized(const TensorRTInferenceBackendOptions& options =
-                            TensorRTInferenceBackendOptions());
+                              TensorRTInferenceBackendOptions());
+  bool InitFromONNX(const std::string& model_file,
+                    const TensorRTInferenceBackendOptions& options =
+                        TensorRTInferenceBackendOptions());
   bool Infer(std::vector<Tensor>& inputs,
              std::vector<Tensor>* outputs) override;
 

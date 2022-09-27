@@ -116,6 +116,7 @@ zetton_cc_library(
   nvinfer
   nvinfer_plugin
   nvparsers
+  nvonnxparser
   Threads::Threads
   zetton_common::zetton_common
   zetton_inference::zetton_inference)

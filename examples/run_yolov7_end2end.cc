@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     detector->Predict(&image, &temp_result);
   }
   detector->DisableRecordTimeOfRuntime();
-  detector->PrintStatisInfoOfRuntime();
+  detector->PrintStatsInfoOfRuntime();
 
   return 0;
 }

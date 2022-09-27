@@ -70,6 +70,51 @@ bool TensorRTInferenceBackend::InitFromSerialized(
   return true;
 }
 
+bool TensorRTInferenceBackend::InitFromONNX(
+    const std::string& model_file,
+    const TensorRTInferenceBackendOptions& options) {
+  // create the builder
+  nvinfer1::IBuilder* builder =
+      nvinfer1::createInferBuilder(*tensorrt::Logger().Get());
+  assert(builder != nullptr);
+
+  const auto explicitBatch =
+      1U << static_cast<uint32_t>(
+          nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+  auto network = builder->createNetworkV2(explicitBatch);
+  auto config = builder->createBuilderConfig();
+
+  auto parser = nvonnxparser::createParser(*network, *tensorrt::Logger().Get());
+  if (!parser->parseFromFile(
+          model_file.c_str(),
+          static_cast<int>(nvinfer1::ILogger::Severity::kINFO))) {
+    AERROR_F("Failure while parsing ONNX file: {}", model_file);
+  }
+  // Build the engine
+  builder->setMaxBatchSize(options_.max_batch_size);
+  config->setMaxWorkspaceSize(options_.max_workspace_size);
+  config->setFlag(nvinfer1::BuilderFlag::kFP16);
+
+  AINFO_F("start building engine");
+  engine_.reset(builder->buildEngineWithConfig(*network, *config));
+  AINFO_F("build engine done");
+  assert(engine);
+  // we can destroy the parser
+  parser->destroy();
+  // save engine
+  nvinfer1::IHostMemory* data = engine_->serialize();
+  std::ofstream file;
+  file.open(options_.serialize_file, std::ios::binary | std::ios::out);
+  AINFO_F("writing engine file to {}", options_.serialize_file);
+  file.write((const char*)data->data(), data->size());
+  AINFO_F("save engine file done");
+  file.close();
+  // then close everything down
+  network->destroy();
+  builder->destroy();
+  return true;
+}
+
 bool TensorRTInferenceBackend::CreateTrtEngine() {
   const auto explicitBatch =
       1U << static_cast<uint32_t>(
