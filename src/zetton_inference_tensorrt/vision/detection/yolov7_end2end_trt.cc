@@ -57,17 +57,23 @@ void YOLOv7End2EndTensorRTInferenceModel::LetterBox(
 bool YOLOv7End2EndTensorRTInferenceModel::Init(
     const InferenceRuntimeOptions& options) {
   runtime_options = options;
+
+  // check inference frontend
   if (runtime_options.model_format == InferenceFrontendType::kONNX ||
       runtime_options.model_format == InferenceFrontendType::kSerialized) {
     valid_cpu_backends = {};                                 // NO CPU
     valid_gpu_backends = {InferenceBackendType::kTensorRT};  // NO ORT
   }
+
+  // check inference device
   if (runtime_options.device != InferenceDeviceType::kGPU) {
     AWARN_F("{} is not support for {}, will fallback to {}.",
             ToString(runtime_options.device), Name(),
             ToString(InferenceDeviceType::kGPU));
     runtime_options.device = InferenceDeviceType::kGPU;
   }
+
+  // check inference backend
   if (runtime_options.backend != InferenceBackendType::kUnknown) {
     if (runtime_options.backend != InferenceBackendType::kTensorRT) {
       AWARN_F("{} is not support for {}, will fallback to {}.",
@@ -76,7 +82,10 @@ bool YOLOv7End2EndTensorRTInferenceModel::Init(
       runtime_options.backend = InferenceBackendType::kTensorRT;
     }
   }
+
+  // initialize inference model
   initialized = InitModel();
+
   return initialized;
 }
 
@@ -89,18 +98,15 @@ bool YOLOv7End2EndTensorRTInferenceModel::Init(
 }
 
 bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
-  // parameters for preprocess
-  size = {640, 640};
-  padding_value = {114.0, 114.0, 114.0};
-  is_mini_pad = false;
-  is_no_pad = false;
-  is_scale_up = false;
-  stride = 32;
+  // init parameters
+  // ...
 
+  // init inference runtime
   if (!InitRuntime()) {
-    AERROR_F("Failed to initialize fastdeploy backend.");
+    AERROR_F("Failed to initialize runtime.");
     return false;
   }
+
   // Check if the input shape is dynamic after Runtime already initialized,
   // Note that, We need to force is_mini_pad 'false' to keep static
   // shape after padding (LetterBox) when the is_dynamic_shape is 'false'.
@@ -114,7 +120,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
     }
   }
   if (!is_dynamic_input_) {
-    is_mini_pad = false;
+    params.is_mini_pad = false;
   }
   return true;
 }
@@ -122,8 +128,9 @@ bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
 bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
     Mat* mat, Tensor* output,
     std::map<std::string, std::array<float, 2>>* im_info) {
-  float ratio = std::min(size[1] * 1.0f / static_cast<float>(mat->Height()),
-                         size[0] * 1.0f / static_cast<float>(mat->Width()));
+  float ratio =
+      std::min(params.size[1] * 1.0f / static_cast<float>(mat->Height()),
+               params.size[0] * 1.0f / static_cast<float>(mat->Width()));
   if (ratio != 1.0) {
     int interp = cv::INTER_AREA;
     if (ratio > 1.0) {
@@ -133,8 +140,8 @@ bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
     int resize_w = int(mat->Width() * ratio);
     Interpolate::Run(mat, resize_w, resize_h, -1, -1, interp);
   }
-  YOLOv7End2EndTensorRTInferenceModel::LetterBox(
-      mat, size, padding_value, is_mini_pad, is_no_pad, is_scale_up, stride);
+  LetterBox(mat, params.size, params.padding_value, params.is_mini_pad,
+            params.is_no_pad, params.is_scale_up, params.stride);
 
   if (model_type_ == YOLOEnd2EndModelType::kYOLOX) {
     // not do BGR2RGB and Normalize when using YOLOX models, or we will get
@@ -217,9 +224,9 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   float scale = std::min(out_h / ipt_h, out_w / ipt_w);
   float pad_h = (out_h - ipt_h * scale) / 2.0f;
   float pad_w = (out_w - ipt_w * scale) / 2.0f;
-  if (is_mini_pad) {
-    pad_h = static_cast<float>(static_cast<int>(pad_h) % stride);
-    pad_w = static_cast<float>(static_cast<int>(pad_w) % stride);
+  if (params.is_mini_pad) {
+    pad_h = static_cast<float>(static_cast<int>(pad_h) % params.stride);
+    pad_w = static_cast<float>(static_cast<int>(pad_w) % params.stride);
   }
   for (auto& boxe : result->boxes) {
     // int32_t label_id = (result->label_ids)[i];

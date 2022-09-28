@@ -11,10 +11,32 @@ namespace zetton {
 namespace inference {
 namespace vision {
 
+/// \brief types (variants) for YOLO End2End model
 enum class YOLOEnd2EndModelType {
   kYOLOv5,
   kYOLOX,
   kYOLOv7,
+};
+
+/// \brief parameters for YOLO End2End model
+struct YOLOEnd2EndModelParams {
+  /// \brief input image size
+  /// \note the input image will be resized to this size
+  /// \details tuple of (width, height)
+  std::vector<int> size = {640, 640};
+  /// \brief padding value, size should be same with Channels
+  std::vector<float> padding_value = {114.0f, 114.0f, 114.0f};
+  /// \brief only pad to the minimum rectange which height and width is times of
+  /// stride
+  bool is_mini_pad = false;
+  /// \brief is_mini_pad = false and is_no_pad = true, will resize the image to
+  /// the set size
+  bool is_no_pad = false;
+  /// \brief if is_scale_up is false, the input image only can be zoom out, the
+  /// maximum resize scale cannot exceed 1.0
+  bool is_scale_up = false;
+  /// \brief padding stride, for is_mini_pad
+  int stride = 32;
 };
 
 /// \brief YOLOv7 end-to-end TensorRT inference model
@@ -44,23 +66,8 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   }
 
  public:
-  /// \brief input image size
-  /// \note the input image will be resized to this size
-  /// \details tuple of (width, height)
-  std::vector<int> size;
-  /// \brief padding value, size should be same with Channels
-  std::vector<float> padding_value;
-  /// \brief only pad to the minimum rectange which height and width is times of
-  /// stride
-  bool is_mini_pad;
-  /// \brief is_mini_pad = false and is_no_pad = true, will resize the image to
-  /// the set size
-  bool is_no_pad;
-  /// \brief if is_scale_up is false, the input image only can be zoom out, the
-  /// maximum resize scale cannot exceed 1.0
-  bool is_scale_up;
-  /// \brief padding stride, for is_mini_pad
-  int stride;
+  /// \brief parameters for the model
+  YOLOEnd2EndModelParams params;
 
  private:
   /// \brief Initialize the model, including the backend and other operations
