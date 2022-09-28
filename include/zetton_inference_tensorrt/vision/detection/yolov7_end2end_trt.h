@@ -21,10 +21,13 @@ enum class YOLOEnd2EndModelType {
 class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
  public:
   /// \brief initialize the inference model with the given options
+  /// \param options the options for the inference model
   bool Init(const InferenceRuntimeOptions& options) override;
 
   /// \brief initialize the inference model with the given options and model
   /// variant type
+  /// \param options inference runtime options
+  /// \param model_type model variant type
   bool Init(const InferenceRuntimeOptions& options,
             const YOLOEnd2EndModelType& model_type);
 
@@ -32,7 +35,6 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \param im input image
   /// \param result output result
   /// \param conf_threshold confidence threshold
-  /// \param model_type subtype of model
   bool Predict(cv::Mat* im, DetectionResult* result,
                float conf_threshold = 0.25);
 
@@ -68,7 +70,6 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \param im input image
   /// \param tensor preprocessed tensor
   /// \param im_info image info stored for postprocess
-  /// \param model_type subtype of model
   bool Preprocess(Mat* mat, Tensor* output,
                   std::map<std::string, std::array<float, 2>>* im_info);
 
@@ -82,6 +83,7 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
                    const std::map<std::string, std::array<float, 2>>& im_info,
                    float conf_threshold);
 
+ private:
   /// \brief do letterbox for the input image
   /// \details resize the image to the set size and pad the image to the minimum
   /// \param mat the input image
