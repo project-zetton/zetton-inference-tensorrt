@@ -74,6 +74,8 @@ bool FastReIDTensorRTInferenceModel::Predict(cv::Mat* im,
     result->features.insert(result->features.end(),
                             single_batch_result.features.begin(),
                             single_batch_result.features.end());
+
+    start_index += params.batch_size;
   }
 
   return true;
@@ -162,15 +164,16 @@ bool FastReIDTensorRTInferenceModel::Preprocess(
 
   Cast::Run(mat, "float");
 
-  AERROR_F("Not implemented yet");
-  return false;
+  mat->ShareWithTensor(output);
+  output->shape.insert(output->shape.begin(), 1);  // reshape to n, h, w, c
+  return true;
 }
 
 bool FastReIDTensorRTInferenceModel::Postprocess(
     std::vector<Tensor>& infer_results, ReIDResult* result,
     const std::map<std::string, std::array<float, 2>>& im_info) {
   // get output features
-  ACHECK_F(infer_results.size() == 1, "Output tensor size must be 4.");
+  ACHECK_F(infer_results.size() == 1, "Output tensor size must be 1.");
   Tensor& feature_tensor = infer_results.at(0);
   ACHECK_F(feature_tensor.dtype == InferenceDataType::kFP32,
            "The dtype of det_scores_tensor must be FP32.");
@@ -183,7 +186,7 @@ bool FastReIDTensorRTInferenceModel::Postprocess(
     return false;
   }
   auto current_batch_size = static_cast<int>(iter_batch_size->second[0]);
-  auto feature_size = feature_tensor.Nbytes() / current_batch_size;
+  auto feature_size = feature_tensor.Numel() / current_batch_size;
   result->Clear();
   result->Reserve(current_batch_size);
   for (int i = 0; i < current_batch_size; ++i) {
