@@ -63,6 +63,9 @@ class FastReIDTensorRTInferenceModel : public BaseInferenceModel {
                    const std::map<std::string, std::array<float, 2>>& im_info);
 
  private:
+  /// \brief crop the input image into sub images by the given bounding boxes
+  /// \param im input image
+  /// \param detections the detection result
   static std::vector<cv::Mat> CropSubImages(const cv::Mat& im,
                                             const DetectionResult& detections);
 };

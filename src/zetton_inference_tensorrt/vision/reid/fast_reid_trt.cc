@@ -193,6 +193,15 @@ bool FastReIDTensorRTInferenceModel::Postprocess(
     result->features.emplace_back(
         feature_data + static_cast<ptrdiff_t>(i * feature_size),
         feature_data + static_cast<ptrdiff_t>((i + 1) * feature_size));
+    // normalize the feature vector
+    float norm = 0.0f;
+    for (auto& f : result->features.back()) {
+      norm += f * f;
+    }
+    norm = std::sqrt(norm);
+    for (auto& f : result->features.back()) {
+      f /= norm;
+    }
   }
 
   return true;

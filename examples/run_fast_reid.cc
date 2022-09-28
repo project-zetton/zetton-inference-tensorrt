@@ -60,5 +60,14 @@ int main(int argc, char** argv) {
             extraction_result.features[i].size());
   }
 
+  // print benchmark
+  zetton::inference::vision::ReIDResult temp_result;
+  extractor->EnableRecordTimeOfRuntime();
+  for (auto i = 0; i < 100; ++i) {
+    extractor->Predict(&image, &detection_result, &extraction_result);
+  }
+  extractor->DisableRecordTimeOfRuntime();
+  extractor->PrintStatsInfoOfRuntime();
+
   return 0;
 }
