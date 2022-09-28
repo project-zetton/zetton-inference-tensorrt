@@ -26,15 +26,15 @@ int main(int argc, char** argv) {
   // init detector
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
-  detector->Init(options);
+  detector->Init(options,
+                 zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // load image
   cv::Mat image = cv::imread("/workspace/data/dog.jpg");
 
   // inference
   zetton::inference::vision::DetectionResult result;
-  detector->Predict(&image, &result, 0.25,
-                    zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
+  detector->Predict(&image, &result, 0.25);
 
   // print result
   AINFO_F("Detected {} objects", result.boxes.size());

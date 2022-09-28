@@ -23,14 +23,18 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \brief initialize the inference model with the given options
   bool Init(const InferenceRuntimeOptions& options) override;
 
+  /// \brief initialize the inference model with the given options and model
+  /// variant type
+  bool Init(const InferenceRuntimeOptions& options,
+            const YOLOEnd2EndModelType& model_type);
+
   /// \brief do inference on the given input image
   /// \param im input image
   /// \param result output result
   /// \param conf_threshold confidence threshold
   /// \param model_type subtype of model
-  bool Predict(
-      cv::Mat* im, DetectionResult* result, float conf_threshold = 0.25,
-      const YOLOEnd2EndModelType& model_type = YOLOEnd2EndModelType::kYOLOv7);
+  bool Predict(cv::Mat* im, DetectionResult* result,
+               float conf_threshold = 0.25);
 
   /// \brief name of the inference model
   std::string Name() const override {
@@ -65,10 +69,8 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
   /// \param tensor preprocessed tensor
   /// \param im_info image info stored for postprocess
   /// \param model_type subtype of model
-  bool Preprocess(
-      Mat* mat, Tensor* output,
-      std::map<std::string, std::array<float, 2>>* im_info,
-      const YOLOEnd2EndModelType& model_type = YOLOEnd2EndModelType::kYOLOv7);
+  bool Preprocess(Mat* mat, Tensor* output,
+                  std::map<std::string, std::array<float, 2>>* im_info);
 
   /// \brief do postprocess for the backend inference output and return the
   /// result
@@ -92,6 +94,9 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
  private:
   /// \brief whether or not the input batch size is dynamic
   bool is_dynamic_input_;
+
+  /// \brief model variant type
+  YOLOEnd2EndModelType model_type_ = YOLOEnd2EndModelType::kYOLOv7;
 };
 
 }  // namespace vision

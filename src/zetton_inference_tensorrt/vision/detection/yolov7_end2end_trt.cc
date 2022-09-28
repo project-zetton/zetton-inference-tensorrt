@@ -80,6 +80,14 @@ bool YOLOv7End2EndTensorRTInferenceModel::Init(
   return initialized;
 }
 
+bool YOLOv7End2EndTensorRTInferenceModel::Init(
+    const InferenceRuntimeOptions& options,
+    const YOLOEnd2EndModelType& model_type) {
+  auto ret = Init(options);
+  model_type_ = model_type;
+  return ret;
+}
+
 bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
   // parameters for preprocess
   size = {640, 640};
@@ -113,8 +121,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::InitModel() {
 
 bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
     Mat* mat, Tensor* output,
-    std::map<std::string, std::array<float, 2>>* im_info,
-    const YOLOEnd2EndModelType& subtype) {
+    std::map<std::string, std::array<float, 2>>* im_info) {
   float ratio = std::min(size[1] * 1.0f / static_cast<float>(mat->Height()),
                          size[0] * 1.0f / static_cast<float>(mat->Width()));
   if (ratio != 1.0) {
@@ -129,7 +136,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Preprocess(
   YOLOv7End2EndTensorRTInferenceModel::LetterBox(
       mat, size, padding_value, is_mini_pad, is_no_pad, is_scale_up, stride);
 
-  if (subtype == YOLOEnd2EndModelType::kYOLOX) {
+  if (model_type_ == YOLOEnd2EndModelType::kYOLOX) {
     // not do BGR2RGB and Normalize when using YOLOX models, or we will get
     // empty predictions according to [this
     // issue](https://github.com/Linaom1214/TensorRT-For-YOLO-Series/issues/11)
@@ -228,9 +235,9 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   return true;
 }
 
-bool YOLOv7End2EndTensorRTInferenceModel::Predict(
-    cv::Mat* im, DetectionResult* result, float conf_threshold,
-    const YOLOEnd2EndModelType& model_type) {
+bool YOLOv7End2EndTensorRTInferenceModel::Predict(cv::Mat* im,
+                                                  DetectionResult* result,
+                                                  float conf_threshold) {
   Mat mat(*im);
   std::vector<Tensor> input_tensors(1);
 
@@ -242,7 +249,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Predict(
   im_info["output_shape"] = {static_cast<float>(mat.Height()),
                              static_cast<float>(mat.Width())};
 
-  if (!Preprocess(&mat, &input_tensors[0], &im_info, model_type)) {
+  if (!Preprocess(&mat, &input_tensors[0], &im_info)) {
     AERROR_F("Failed to preprocess input image.");
     return false;
   }
