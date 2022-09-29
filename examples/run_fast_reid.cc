@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
           extraction_result.features.size());
   for (int i = 0; i < extraction_result.features.size(); ++i) {
     AINFO_F("-> label {}: feature shape {}", detection_result.label_ids[i],
-            extraction_result.features[i].size());
+            extraction_result.features[i].total());
   }
 
   // print benchmark

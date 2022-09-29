@@ -190,6 +190,7 @@ bool FastReIDTensorRTInferenceModel::Postprocess(
   result->Clear();
   result->Reserve(current_batch_size);
   for (int i = 0; i < current_batch_size; ++i) {
+#if 0
     result->features.emplace_back(
         feature_data + static_cast<ptrdiff_t>(i * feature_size),
         feature_data + static_cast<ptrdiff_t>((i + 1) * feature_size));
@@ -202,6 +203,12 @@ bool FastReIDTensorRTInferenceModel::Postprocess(
     for (auto& f : result->features.back()) {
       f /= norm;
     }
+#else
+    result->features.emplace_back(
+        1, feature_size, CV_32FC1,
+        feature_data + static_cast<ptrdiff_t>(i * feature_size));
+    cv::normalize(result->features.back(), result->features.back());
+#endif
   }
 
   return true;
