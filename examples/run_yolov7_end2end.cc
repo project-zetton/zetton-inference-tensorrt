@@ -1,20 +1,33 @@
+#include <absl/flags/flag.h>
+#include <absl/flags/parse.h>
 #include <absl/strings/str_join.h>
-#include <zetton_common/util/perf.h>
 
 #include <opencv2/imgcodecs.hpp>
 
+#include "zetton_common/util/perf.h"
 #include "zetton_inference/vision/base/result.h"
 #include "zetton_inference/vision/util/visualize.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
+ABSL_FLAG(std::string, input_file, "/workspace/data/person.jpg",
+          "path to input image file");
+ABSL_FLAG(std::string, detection_model_path,
+          "/workspace/model/yolov7-tiny-nms.trt",
+          "path to YOLOv7 detection model file");
+
 int main(int argc, char** argv) {
+  // parse args
+  absl::ParseCommandLine(argc, argv);
+  auto input_file = absl::GetFlag(FLAGS_input_file);
+  auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
+
   // init options
   zetton::inference::InferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
 #if 1
   options.model_format = zetton::inference::InferenceFrontendType::kSerialized;
-  options.SetCacheFileForTensorRT("/workspace/model/yolov7-tiny-nms.trt");
+  options.SetCacheFileForTensorRT(detection_model_path);
   // options.SetCacheFileForTensorRT("/workspace/model/yolov5n-nms.trt");
   // options.SetCacheFileForTensorRT("/workspace/model/yolox_s-nms.trt");
 #else
@@ -31,7 +44,7 @@ int main(int argc, char** argv) {
                  zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // load image
-  cv::Mat image = cv::imread("/workspace/data/dog.jpg");
+  cv::Mat image = cv::imread(input_file);
 
   // inference
   zetton::inference::vision::DetectionResult result;
@@ -59,7 +72,7 @@ int main(int argc, char** argv) {
   detector->DisableRecordTimeOfRuntime();
   detector->PrintStatsInfoOfRuntime();
 
-  // print benchmark for total process time
+  // print benchmark for total processing time
   zetton::common::FpsCalculator fps;
   for (auto i = 0; i < 100; ++i) {
     fps.Start();

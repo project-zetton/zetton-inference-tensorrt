@@ -1,3 +1,6 @@
+#include <absl/flags/flag.h>
+#include <absl/flags/parse.h>
+
 #include <memory>
 #include <opencv2/imgcodecs.hpp>
 
@@ -5,15 +8,28 @@
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 #include "zetton_inference_tensorrt/vision/reid/fast_reid_trt.h"
 
+ABSL_FLAG(std::string, input_file, "/workspace/data/person.jpg",
+          "path to input image file");
+ABSL_FLAG(std::string, detection_model_path,
+          "/workspace/model/yolov7-tiny-nms.trt",
+          "path to YOLOv7 detection model file");
+ABSL_FLAG(std::string, reid_model_path, "/workspace/model/market_bot_R50.trt",
+          "path to fast-reid model file");
+
 int main(int argc, char** argv) {
+  // parse args
+  absl::ParseCommandLine(argc, argv);
+  auto input_file = absl::GetFlag(FLAGS_input_file);
+  auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
+  auto reid_model_path = absl::GetFlag(FLAGS_reid_model_path);
+
   // init detector
   zetton::inference::InferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =
       zetton::inference::InferenceFrontendType::kSerialized;
-  detector_options.SetCacheFileForTensorRT(
-      "/workspace/model/yolov7-tiny-nms.trt");
+  detector_options.SetCacheFileForTensorRT(detection_model_path);
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
   detector->Init(detector_options,
@@ -25,15 +41,14 @@ int main(int argc, char** argv) {
   extractor_options.UseGpu();
   extractor_options.model_format =
       zetton::inference::InferenceFrontendType::kSerialized;
-  extractor_options.SetCacheFileForTensorRT(
-      "/workspace/model/market_bot_R50.trt");
+  extractor_options.SetCacheFileForTensorRT(reid_model_path);
   auto extractor = std::make_shared<
       zetton::inference::vision::FastReIDTensorRTInferenceModel>();
   extractor->Init(extractor_options);
   extractor->params.batch_size = 1;
 
   // load image
-  cv::Mat image = cv::imread("/workspace/data/person.jpg");
+  cv::Mat image = cv::imread(input_file);
 
   // detect objects
   zetton::inference::vision::DetectionResult detection_result;
@@ -69,7 +84,7 @@ int main(int argc, char** argv) {
   extractor->DisableRecordTimeOfRuntime();
   extractor->PrintStatsInfoOfRuntime();
 
-  // print benchmark for total process time
+  // print benchmark for total processing time
   zetton::common::FpsCalculator fps;
   for (auto i = 0; i < 100; ++i) {
     fps.Start();

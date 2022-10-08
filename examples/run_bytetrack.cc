@@ -1,21 +1,36 @@
-#include <zetton_common/util/perf.h>
+#include <absl/flags/flag.h>
+#include <absl/flags/parse.h>
 
 #include <opencv2/opencv.hpp>
 
+#include "zetton_common/util/perf.h"
 #include "zetton_inference/vision/base/result.h"
 #include "zetton_inference/vision/tracking/bytetrack/byte_tracker.h"
 #include "zetton_inference/vision/util/visualize.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
+ABSL_FLAG(std::string, input_file,
+          "/workspace/data/sample-videos/person-bicycle-car-detection.mp4",
+          "path to input video file");
+ABSL_FLAG(std::string, output_file, "result.avi", "path to output video file");
+ABSL_FLAG(std::string, detection_model_path,
+          "/workspace/model/yolov7-tiny-nms.trt",
+          "path to YOLOv7 detection model file");
+
 int main(int argc, char** argv) {
+  // parse args
+  absl::ParseCommandLine(argc, argv);
+  auto input_file = absl::GetFlag(FLAGS_input_file);
+  auto output_file = absl::GetFlag(FLAGS_output_file);
+  auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
+
   // init detector
   zetton::inference::InferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =
       zetton::inference::InferenceFrontendType::kSerialized;
-  detector_options.SetCacheFileForTensorRT(
-      "/workspace/model/yolov7-tiny-nms.trt");
+  detector_options.SetCacheFileForTensorRT(detection_model_path);
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
   detector->Init(detector_options,
@@ -27,18 +42,15 @@ int main(int argc, char** argv) {
   tracker.Init(tracker_params);
 
   // init video IO
-  std::string video_name =
-      "/workspace/data/sample-videos/person-bicycle-car-detection.mp4";
-  std::string output_name = "result.avi";
-  AINFO_F("Processing: {}", video_name);
-  cv::VideoCapture video_cap(video_name);
+  AINFO_F("Processing: {}", input_file);
+  cv::VideoCapture video_cap(input_file);
   cv::Size sSize = cv::Size((int)video_cap.get(cv::CAP_PROP_FRAME_WIDTH),
                             (int)video_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
   auto fFps = static_cast<float>(video_cap.get(cv::CAP_PROP_FPS));
   AINFO_F("Frame width is: {}, height is: {}, video fps is: {}", sSize.width,
           sSize.height, fFps);
   cv::VideoWriter video_writer(
-      output_name, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fFps, sSize);
+      output_file, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), fFps, sSize);
 
   // do detection and tracking
   cv::Mat src_img;
@@ -81,7 +93,7 @@ int main(int argc, char** argv) {
   fps.PrintInfo("YOLOv7 w/ ByteTrack");
 
   // print other messages
-  AINFO_F("Result video saved to: {}", output_name);
+  AINFO_F("Result video saved to: {}", output_file);
   AINFO_F("Done!");
 
   return 0;

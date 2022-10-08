@@ -76,7 +76,7 @@ if(WIN32)
 endif()
 
 # global compilations
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -117,6 +117,8 @@ zetton_cc_library(
   nvparsers
   nvonnxparser
   Threads::Threads
+  absl::flags
+  absl::flags_parse
   zetton_common::zetton_common
   zetton_inference::zetton_inference)
 
