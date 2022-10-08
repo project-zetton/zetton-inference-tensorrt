@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
   tracker.Init(tracker_params);
 
   // init video IO
-  std::string video_name = "/workspace/data/person.mp4";
+  std::string video_name =
+      "/workspace/data/sample-videos/person-bicycle-car-detection.mp4";
   std::string output_name = "result.avi";
   AINFO_F("Processing: {}", video_name);
   cv::VideoCapture video_cap(video_name);
@@ -45,12 +46,28 @@ int main(int argc, char** argv) {
   while (video_cap.read(src_img)) {
     // detect objects
     detector->Predict(&src_img, &detection_result, 0.25);
+    AINFO_F("Detected {} objects", detection_result.boxes.size());
+    for (std::size_t i = 0; i < detection_result.boxes.size(); ++i) {
+      AINFO_F("-> label: {}, score: {}, bbox: {} {} {} {}",
+              detection_result.label_ids[i], detection_result.scores[i],
+              detection_result.boxes[i][0], detection_result.boxes[i][1],
+              detection_result.boxes[i][2], detection_result.boxes[i][3]);
+    }
     // track objects
     tracker.Update(detection_result, tracking_result);
+    AINFO_F("Tracked {} objects", tracking_result.boxes.size());
+    for (std::size_t i = 0; i < tracking_result.boxes.size(); ++i) {
+      AINFO_F("-> label: {}, score: {}, bbox: {} {} {} {}",
+              tracking_result.label_ids[i], tracking_result.scores[i],
+              tracking_result.boxes[i][0], tracking_result.boxes[i][1],
+              tracking_result.boxes[i][2], tracking_result.boxes[i][3]);
+    }
     // draw tracking results
     auto result_img = viz.Visualize(src_img, tracking_result);
     // write to output video
     video_writer.write(result_img);
+
+    AINFO_F("--------------------");
   }
 
   AINFO_F("Result video saved to: {}", output_name);
