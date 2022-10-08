@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
             extraction_result.features[i].total());
   }
 
-  // print benchmark
+  // print benchmark of inference time
   zetton::inference::vision::ReIDResult temp_result;
   extractor->EnableRecordTimeOfRuntime();
   for (auto i = 0; i < 100; ++i) {
@@ -68,6 +68,15 @@ int main(int argc, char** argv) {
   }
   extractor->DisableRecordTimeOfRuntime();
   extractor->PrintStatsInfoOfRuntime();
+
+  // print benchmark for total process time
+  zetton::common::FpsCalculator fps;
+  for (auto i = 0; i < 100; ++i) {
+    fps.Start();
+    extractor->Predict(&image, &detection_result, &extraction_result);
+    fps.End();
+  }
+  fps.PrintInfo("FastReID (total)");
 
   return 0;
 }

@@ -1,3 +1,5 @@
+#include <zetton_common/util/perf.h>
+
 #include <opencv2/opencv.hpp>
 
 #include "zetton_inference/vision/base/result.h"
@@ -42,8 +44,11 @@ int main(int argc, char** argv) {
   cv::Mat src_img;
   zetton::inference::vision::DetectionResult detection_result;
   zetton::inference::vision::TrackingResult tracking_result;
-  auto viz = zetton::inference::vision::Visualization();
+  zetton::inference::vision::Visualization viz;
+  zetton::common::FpsCalculator fps;
   while (video_cap.read(src_img)) {
+    // start timer
+    fps.Start();
     // detect objects
     detector->Predict(&src_img, &detection_result, 0.25);
     AINFO_F("Detected {} objects", detection_result.boxes.size());
@@ -62,6 +67,8 @@ int main(int argc, char** argv) {
               tracking_result.boxes[i][0], tracking_result.boxes[i][1],
               tracking_result.boxes[i][2], tracking_result.boxes[i][3]);
     }
+    // stop timer
+    fps.End();
     // draw tracking results
     auto result_img = viz.Visualize(src_img, tracking_result);
     // write to output video
@@ -70,6 +77,12 @@ int main(int argc, char** argv) {
     AINFO_F("--------------------");
   }
 
+  // print profiling info
+  fps.PrintInfo("YOLOv7 w/ ByteTrack");
+
+  // print other messages
   AINFO_F("Result video saved to: {}", output_name);
   AINFO_F("Done!");
+
+  return 0;
 }

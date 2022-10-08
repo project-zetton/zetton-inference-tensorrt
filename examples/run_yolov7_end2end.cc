@@ -1,4 +1,5 @@
 #include <absl/strings/str_join.h>
+#include <zetton_common/util/perf.h>
 
 #include <opencv2/imgcodecs.hpp>
 
@@ -49,7 +50,7 @@ int main(int argc, char** argv) {
   auto result_image = viz.Visualize(image, result);
   cv::imwrite("predictions.png", result_image);
 
-  // print benchmark
+  // print benchmark of inference time
   zetton::inference::vision::DetectionResult temp_result;
   detector->EnableRecordTimeOfRuntime();
   for (auto i = 0; i < 100; ++i) {
@@ -57,6 +58,15 @@ int main(int argc, char** argv) {
   }
   detector->DisableRecordTimeOfRuntime();
   detector->PrintStatsInfoOfRuntime();
+
+  // print benchmark for total process time
+  zetton::common::FpsCalculator fps;
+  for (auto i = 0; i < 100; ++i) {
+    fps.Start();
+    detector->Predict(&image, &temp_result);
+    fps.End();
+  }
+  fps.PrintInfo("YOLOv7 (total)");
 
   return 0;
 }
