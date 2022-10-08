@@ -187,11 +187,11 @@ bool YOLOv7End2EndTensorRTInferenceModel::Postprocess(
   auto* scores_data = static_cast<float*>(scores_tensor.Data());  // (1,100)
   auto* classes_data = static_cast<int32_t*>(classes_tensor.Data());  // (1,100)
   int32_t num_dets_after_trt_nms = static_cast<int32_t*>(num_tensor.Data())[0];
+  result->Clear();
+  result->Reserve(num_dets_after_trt_nms);
   if (num_dets_after_trt_nms == 0) {
     return true;
   }
-  result->Clear();
-  result->Reserve(num_dets_after_trt_nms);
   for (int i = 0; i < num_dets_after_trt_nms; ++i) {
     float confidence = scores_data[i];
     if (confidence <= conf_threshold) {
