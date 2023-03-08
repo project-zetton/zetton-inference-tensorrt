@@ -8,7 +8,7 @@ title: 代码地图
 
 # 代码地图
 
-本文档旨在帮助您了解 zetton-common 代码的结构和功能。
+本文档旨在帮助您了解 zetton-inference-tensorrt 代码的结构和功能。
 
 ## 目录结构
 

@@ -21,7 +21,7 @@ title: 快速入门指南
 
 3. [TensorRT](https://developer.nvidia.com/tensorrt): 用于加速模型推理，要求 8.0 或更高版本
 
-上述所有依赖库，可以参考 [zetton-docker](https://github.com/project-zetton/zetton-docker) 中的 `Dockerfile` 进行安装。或者直接使用 zetton-docker 提供的 Docker 容器来运行 zetton-common 代码。
+上述所有依赖库，可以参考 [zetton-docker](https://github.com/project-zetton/zetton-docker) 中的 `Dockerfile` 进行安装。或者直接使用 zetton-docker 提供的 Docker 容器来运行 zetton-inference-tensorrt 代码。
 
 ## 获取并编译 zetton-inference-tensorrt 代码
 

@@ -25,7 +25,7 @@ zetton-inference-tensorrt is an open source extension of [zetton-inference](http
 
 Please refer to [changelog.md](docs/en/changelog.md) for details and release history.
 
-For compatibility changes between different versions of zetton-inference, please refer to [compatibility.md](docs/en/compatibility.md).
+For compatibility changes between different versions of zetton-inference-tensorrt, please refer to [compatibility.md](docs/en/compatibility.md).
 
 ## Installation
 
@@ -33,7 +33,7 @@ Please refer to [Installation](docs/en/get_started.md) for installation instruct
 
 ## Getting Started
 
-Please see [get_started.md](docs/en/get_started.md) for the basic usage of zetton-inference.
+Please see [get_started.md](docs/en/get_started.md) for the basic usage of zetton-inference-tensorrt.
 
 ## Overview of Benchmark and Model Zoo
 
@@ -63,7 +63,7 @@ Please refer to [FAQ](docs/en/faq.md) for frequently asked questions.
 
 ## Contributing
 
-We appreciate all contributions to improve zetton-inferenece. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
+We appreciate all contributions to improve zetton-inference-tensorrt. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
 
 ## Acknowledgement
 

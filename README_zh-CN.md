@@ -1,10 +1,10 @@
-# zetton-inference
+# zetton-inference-tensorrt
 
 [English](README.md) | 中文
 
 ## 目录
 
-- [zetton-inference](#zetton-inference)
+- [zetton-inference-tensorrt](#zetton-inference-tensorrt)
   - [目录](#目录)
   - [简介](#简介)
   - [最新进展](#最新进展)
@@ -63,7 +63,7 @@ NVIDIA Jetson Xavier NX
 
 ## 贡献指南
 
-我们感谢所有为改进 zetton-inferenece-tensorrt 做出贡献的人。请参考 [贡献指南](.github/CONTRIBUTING.md) 了解参与项目贡献的相关指引。
+我们感谢所有为改进 zetton-inference-tensorrt 做出贡献的人。请参考 [贡献指南](.github/CONTRIBUTING.md) 了解参与项目贡献的相关指引。
 
 ## 致谢
 
