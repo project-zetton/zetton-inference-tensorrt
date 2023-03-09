@@ -6,6 +6,28 @@ namespace zetton {
 namespace inference {
 namespace tensorrt {
 
+/// \brief Options for TensorRT inference backend
+struct TensorRTInferenceBackendOptions {
+  /// \brief device id (e.g. GPU id) for model inference
+  int gpu_id = 0;
+  /// \brief whether or not to enable FP16 precision in TensorRT model inference
+  bool enable_fp16 = false;
+  /// \brief whether or not to enable INT8 precision in TensorRT model inference
+  bool enable_int8 = false;
+  /// \brief maximum batch size for TensorRT model inference
+  size_t max_batch_size = 32;
+  /// \brief maximum workspace size for TensorRT model inference
+  size_t max_workspace_size = 1 << 30;
+  /// \brief maximum input tensor shape for TensorRT model inference
+  std::map<std::string, std::vector<int32_t>> max_shape;
+  /// \brief minimum input tensor shape for TensorRT model inference
+  std::map<std::string, std::vector<int32_t>> min_shape;
+  /// \brief optimal input tensor shape for TensorRT model inference
+  std::map<std::string, std::vector<int32_t>> opt_shape;
+  /// \brief serialized TensorRT model file
+  std::string serialize_file = "";
+};
+
 struct TensorRTInferenceRuntimeOptions : public InferenceRuntimeOptions {
  public:
   TensorRTInferenceRuntimeOptions() = default;
@@ -35,22 +57,7 @@ struct TensorRTInferenceRuntimeOptions : public InferenceRuntimeOptions {
   void SetCacheFileForTensorRT(const std::string& cache_file_path);
 
  public:
-  /// \brief maximum input tensor shape for TensorRT model inference
-  std::map<std::string, std::vector<int32_t>> trt_max_shape;
-  /// \brief minimum input tensor shape for TensorRT model inference
-  std::map<std::string, std::vector<int32_t>> trt_min_shape;
-  /// \brief optimal input tensor shape for TensorRT model inference
-  std::map<std::string, std::vector<int32_t>> trt_opt_shape;
-  /// \brief serialized TensorRT model file
-  std::string trt_serialize_file = "";
-  /// \brief whether or not to enable FP16 precision in TensorRT model inference
-  bool trt_enable_fp16 = false;
-  /// \brief whether or not to enable INT8 precision in TensorRT model inference
-  bool trt_enable_int8 = false;
-  /// \brief maximum batch size for TensorRT model inference
-  size_t trt_max_batch_size = 32;
-  /// \brief maximum workspace size for TensorRT model inference
-  size_t trt_max_workspace_size = 1 << 30;
+  TensorRTInferenceBackendOptions backend_options;
 };
 
 }  // namespace tensorrt

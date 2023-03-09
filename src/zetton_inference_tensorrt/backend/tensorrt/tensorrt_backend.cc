@@ -20,15 +20,7 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions* options) {
   // convert InferenceRuntimeOptions to TensorRTInferenceRuntimeOptions
   const tensorrt::TensorRTInferenceRuntimeOptions* tensorrt_options =
       dynamic_cast<const tensorrt::TensorRTInferenceRuntimeOptions*>(options);
-  options_.gpu_id = tensorrt_options->device_id;
-  options_.enable_fp16 = tensorrt_options->trt_enable_fp16;
-  options_.enable_int8 = tensorrt_options->trt_enable_int8;
-  options_.max_batch_size = tensorrt_options->trt_max_batch_size;
-  options_.max_workspace_size = tensorrt_options->trt_max_workspace_size;
-  options_.max_shape = tensorrt_options->trt_max_shape;
-  options_.min_shape = tensorrt_options->trt_min_shape;
-  options_.opt_shape = tensorrt_options->trt_opt_shape;
-  options_.serialize_file = tensorrt_options->trt_serialize_file;
+  options_ = tensorrt_options->backend_options;
 
   ACHECK_F(
       tensorrt_options->model_format == InferenceFrontendType::kSerialized ||
@@ -53,7 +45,7 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions* options) {
 }
 
 bool TensorRTInferenceBackend::InitFromSerialized(
-    const TensorRTInferenceBackendOptions& options) {
+    const tensorrt::TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
     AERROR_F("TensorRT inference backend has been initialized");
     return false;
@@ -75,7 +67,7 @@ bool TensorRTInferenceBackend::InitFromSerialized(
 
 bool TensorRTInferenceBackend::InitFromONNX(
     const std::string& model_file,
-    const TensorRTInferenceBackendOptions& options) {
+    const tensorrt::TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
     AERROR_F("TensorRT inference backend has been initialized");
     return false;
