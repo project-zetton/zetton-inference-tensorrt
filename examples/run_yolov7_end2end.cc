@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
   auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
 
   // init options
-  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions options;
+  zetton::inference::TensorRTInferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
 #if 1

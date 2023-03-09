@@ -18,8 +18,8 @@ tensorrt::Logger* tensorrt::Logger::logger = nullptr;
 
 bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions* options) {
   // convert InferenceRuntimeOptions to TensorRTInferenceRuntimeOptions
-  const tensorrt::TensorRTInferenceRuntimeOptions* tensorrt_options =
-      dynamic_cast<const tensorrt::TensorRTInferenceRuntimeOptions*>(options);
+  const TensorRTInferenceRuntimeOptions* tensorrt_options =
+      dynamic_cast<const TensorRTInferenceRuntimeOptions*>(options);
   options_ = tensorrt_options->backend_options;
 
   ACHECK_F(
@@ -45,7 +45,7 @@ bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions* options) {
 }
 
 bool TensorRTInferenceBackend::InitFromSerialized(
-    const tensorrt::TensorRTInferenceBackendOptions& options) {
+    const TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
     AERROR_F("TensorRT inference backend has been initialized");
     return false;
@@ -67,7 +67,7 @@ bool TensorRTInferenceBackend::InitFromSerialized(
 
 bool TensorRTInferenceBackend::InitFromONNX(
     const std::string& model_file,
-    const tensorrt::TensorRTInferenceBackendOptions& options) {
+    const TensorRTInferenceBackendOptions& options) {
   if (initialized_) {
     AERROR_F("TensorRT inference backend has been initialized");
     return false;

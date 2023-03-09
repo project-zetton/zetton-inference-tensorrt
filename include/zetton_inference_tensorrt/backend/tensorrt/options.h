@@ -4,7 +4,6 @@
 
 namespace zetton {
 namespace inference {
-namespace tensorrt {
 
 /// \brief Options for TensorRT inference backend
 struct TensorRTInferenceBackendOptions {
@@ -60,6 +59,5 @@ struct TensorRTInferenceRuntimeOptions : public InferenceRuntimeOptions {
   TensorRTInferenceBackendOptions backend_options;
 };
 
-}  // namespace tensorrt
 }  // namespace inference
 }  // namespace zetton

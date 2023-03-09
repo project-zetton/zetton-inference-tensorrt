@@ -2,7 +2,6 @@
 
 namespace zetton {
 namespace inference {
-namespace tensorrt {
 
 void TensorRTInferenceRuntimeOptions::SetInputShapeForTensorRT(
     const std::string& input_name, const std::vector<int32_t>& min_shape,
@@ -42,6 +41,5 @@ void TensorRTInferenceRuntimeOptions::SetCacheFileForTensorRT(
   backend_options.serialize_file = cache_file_path;
 }
 
-}  // namespace tensorrt
 }  // namespace inference
 }  // namespace zetton

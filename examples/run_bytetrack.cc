@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
 
   // init detector
-  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions detector_options;
+  zetton::inference::TensorRTInferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =

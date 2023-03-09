@@ -36,13 +36,12 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
   /// \brief initialize TensorRT inference backend with options
   bool Init(const InferenceRuntimeOptions* options) override;
   /// \brief initialize TensorRT inference backend with serialized model file
-  bool InitFromSerialized(
-      const tensorrt::TensorRTInferenceBackendOptions& options =
-          tensorrt::TensorRTInferenceBackendOptions());
+  bool InitFromSerialized(const TensorRTInferenceBackendOptions& options =
+                              TensorRTInferenceBackendOptions());
   /// \brief initialize TensorRT inference backend with ONNX model file
   bool InitFromONNX(const std::string& model_file,
-                    const tensorrt::TensorRTInferenceBackendOptions& options =
-                        tensorrt::TensorRTInferenceBackendOptions());
+                    const TensorRTInferenceBackendOptions& options =
+                        TensorRTInferenceBackendOptions());
 
   /// \brief infer the input tensors and save the results to output tensors
   bool Infer(std::vector<Tensor>& inputs,
@@ -78,7 +77,7 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
 
  private:
   /// \brief options for TensorRT inference backend
-  tensorrt::TensorRTInferenceBackendOptions options_;
+  TensorRTInferenceBackendOptions options_;
   /// \brief TensorRT engine
   std::shared_ptr<nvinfer1::ICudaEngine> engine_;
   /// \brief TensorRT inference context

@@ -9,7 +9,7 @@ TEST(TensorRTInferenceBackendTest, InitBackend) {
       std::make_shared<zetton::inference::TensorRTInferenceBackend>();
   EXPECT_EQ(backend->Initialized(), false);
 
-  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions options;
+  zetton::inference::TensorRTInferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
   options.model_format = zetton::inference::InferenceFrontendType::kSerialized;

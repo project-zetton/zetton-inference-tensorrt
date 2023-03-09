@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   auto reid_model_path = absl::GetFlag(FLAGS_reid_model_path);
 
   // init detector
-  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions detector_options;
+  zetton::inference::TensorRTInferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =
@@ -37,8 +37,7 @@ int main(int argc, char** argv) {
                  zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // init feature extractor
-  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions
-      extractor_options;
+  zetton::inference::TensorRTInferenceRuntimeOptions extractor_options;
   extractor_options.UseTensorRTBackend();
   extractor_options.UseGpu();
   extractor_options.model_format =
