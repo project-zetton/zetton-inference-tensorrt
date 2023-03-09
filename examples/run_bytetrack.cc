@@ -7,6 +7,7 @@
 #include "zetton_inference/vision/base/result.h"
 #include "zetton_inference/vision/tracking/bytetrack/byte_tracker.h"
 #include "zetton_inference/vision/util/visualize.h"
+#include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
 ABSL_FLAG(std::string, input_file,
@@ -25,7 +26,7 @@ int main(int argc, char** argv) {
   auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
 
   // init detector
-  zetton::inference::InferenceRuntimeOptions detector_options;
+  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =
@@ -33,7 +34,7 @@ int main(int argc, char** argv) {
   detector_options.SetCacheFileForTensorRT(detection_model_path);
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
-  detector->Init(detector_options,
+  detector->Init(&detector_options,
                  zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // init tracker

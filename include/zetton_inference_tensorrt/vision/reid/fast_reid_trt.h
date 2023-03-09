@@ -24,7 +24,7 @@ struct FastReIDModelParams {
 class FastReIDTensorRTInferenceModel : public BaseInferenceModel {
  public:
   /// \brief initialize the inference model with the given options
-  bool Init(const InferenceRuntimeOptions& options) override;
+  bool Init(InferenceRuntimeOptions* options) override;
 
   /// \brief do inference on the given input image
   /// \param im input image

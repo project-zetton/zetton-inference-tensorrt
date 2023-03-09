@@ -12,6 +12,7 @@
 #include "zetton_inference/vision/base/transform/normalize.h"
 #include "zetton_inference/vision/base/transform/pad.h"
 #include "zetton_inference/vision/base/transform/permute.h"
+#include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 
 namespace zetton {
 namespace inference {
@@ -55,31 +56,31 @@ void YOLOv7End2EndTensorRTInferenceModel::LetterBox(
 }
 
 bool YOLOv7End2EndTensorRTInferenceModel::Init(
-    const InferenceRuntimeOptions& options) {
+    InferenceRuntimeOptions* options) {
   runtime_options = options;
 
   // check inference frontend
-  if (runtime_options.model_format == InferenceFrontendType::kONNX ||
-      runtime_options.model_format == InferenceFrontendType::kSerialized) {
+  if (runtime_options->model_format == InferenceFrontendType::kONNX ||
+      runtime_options->model_format == InferenceFrontendType::kSerialized) {
     valid_cpu_backends = {};                                 // NO CPU
     valid_gpu_backends = {InferenceBackendType::kTensorRT};  // NO ORT
   }
 
   // check inference device
-  if (runtime_options.device != InferenceDeviceType::kGPU) {
+  if (runtime_options->device != InferenceDeviceType::kGPU) {
     AWARN_F("{} is not support for {}, will fallback to {}.",
-            ToString(runtime_options.device), Name(),
+            ToString(runtime_options->device), Name(),
             ToString(InferenceDeviceType::kGPU));
-    runtime_options.device = InferenceDeviceType::kGPU;
+    runtime_options->device = InferenceDeviceType::kGPU;
   }
 
   // check inference backend
-  if (runtime_options.backend != InferenceBackendType::kUnknown) {
-    if (runtime_options.backend != InferenceBackendType::kTensorRT) {
+  if (runtime_options->backend != InferenceBackendType::kUnknown) {
+    if (runtime_options->backend != InferenceBackendType::kTensorRT) {
       AWARN_F("{} is not support for {}, will fallback to {}.",
-              ToString(runtime_options.backend), Name(),
+              ToString(runtime_options->backend), Name(),
               ToString(InferenceBackendType::kTensorRT));
-      runtime_options.backend = InferenceBackendType::kTensorRT;
+      runtime_options->backend = InferenceBackendType::kTensorRT;
     }
   }
 
@@ -90,8 +91,7 @@ bool YOLOv7End2EndTensorRTInferenceModel::Init(
 }
 
 bool YOLOv7End2EndTensorRTInferenceModel::Init(
-    const InferenceRuntimeOptions& options,
-    const YOLOEnd2EndModelType& model_type) {
+    InferenceRuntimeOptions* options, const YOLOEnd2EndModelType& model_type) {
   auto ret = Init(options);
   model_type_ = model_type;
   return ret;

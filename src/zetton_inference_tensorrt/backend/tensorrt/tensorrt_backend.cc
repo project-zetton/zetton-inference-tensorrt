@@ -16,32 +16,36 @@ namespace inference {
 
 tensorrt::Logger* tensorrt::Logger::logger = nullptr;
 
-bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions& options) {
-  options_.gpu_id = options.device_id;
-  options_.enable_fp16 = options.trt_enable_fp16;
-  options_.enable_int8 = options.trt_enable_int8;
-  options_.max_batch_size = options.trt_max_batch_size;
-  options_.max_workspace_size = options.trt_max_workspace_size;
-  options_.max_shape = options.trt_max_shape;
-  options_.min_shape = options.trt_min_shape;
-  options_.opt_shape = options.trt_opt_shape;
-  options_.serialize_file = options.trt_serialize_file;
+bool TensorRTInferenceBackend::Init(const InferenceRuntimeOptions* options) {
+  // convert InferenceRuntimeOptions to TensorRTInferenceRuntimeOptions
+  const tensorrt::TensorRTInferenceRuntimeOptions* tensorrt_options =
+      dynamic_cast<const tensorrt::TensorRTInferenceRuntimeOptions*>(options);
+  options_.gpu_id = tensorrt_options->device_id;
+  options_.enable_fp16 = tensorrt_options->trt_enable_fp16;
+  options_.enable_int8 = tensorrt_options->trt_enable_int8;
+  options_.max_batch_size = tensorrt_options->trt_max_batch_size;
+  options_.max_workspace_size = tensorrt_options->trt_max_workspace_size;
+  options_.max_shape = tensorrt_options->trt_max_shape;
+  options_.min_shape = tensorrt_options->trt_min_shape;
+  options_.opt_shape = tensorrt_options->trt_opt_shape;
+  options_.serialize_file = tensorrt_options->trt_serialize_file;
 
-  ACHECK_F(options.model_format == InferenceFrontendType::kSerialized ||
-               options.model_format == InferenceFrontendType::kONNX,
-           "Unsupported model format: {}", ToString(options.model_format));
+  ACHECK_F(
+      tensorrt_options->model_format == InferenceFrontendType::kSerialized ||
+          tensorrt_options->model_format == InferenceFrontendType::kONNX,
+      "Unsupported model format: {}", ToString(tensorrt_options->model_format));
 
-  if (options.model_format == InferenceFrontendType::kSerialized) {
+  if (tensorrt_options->model_format == InferenceFrontendType::kSerialized) {
     ACHECK_F(InitFromSerialized(options_),
              "Failed to initialize TensorRT inference backend from serialized "
              "model file: {}",
              options_.serialize_file);
     return true;
-  } else if (options.model_format == InferenceFrontendType::kONNX) {
-    ACHECK_F(InitFromONNX(options.model_file, options_),
+  } else if (tensorrt_options->model_format == InferenceFrontendType::kONNX) {
+    ACHECK_F(InitFromONNX(tensorrt_options->model_file, options_),
              "Failed to initialize TensorRT inference backend from ONNX model "
              "file: {}",
-             options.model_file);
+             tensorrt_options->model_file);
     return true;
   }
 

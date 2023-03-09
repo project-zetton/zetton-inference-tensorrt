@@ -44,13 +44,13 @@ class YOLOv7End2EndTensorRTInferenceModel : public BaseInferenceModel {
  public:
   /// \brief initialize the inference model with the given options
   /// \param options the options for the inference model
-  bool Init(const InferenceRuntimeOptions& options) override;
+  bool Init(InferenceRuntimeOptions* options) override;
 
   /// \brief initialize the inference model with the given options and model
   /// variant type
   /// \param options inference runtime options
   /// \param model_type model variant type
-  bool Init(const InferenceRuntimeOptions& options,
+  bool Init(InferenceRuntimeOptions* options,
             const YOLOEnd2EndModelType& model_type);
 
   /// \brief do inference on the given input image

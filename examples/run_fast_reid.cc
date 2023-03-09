@@ -5,6 +5,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "zetton_inference/vision/base/result.h"
+#include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 #include "zetton_inference_tensorrt/vision/reid/fast_reid_trt.h"
 
@@ -24,7 +25,7 @@ int main(int argc, char** argv) {
   auto reid_model_path = absl::GetFlag(FLAGS_reid_model_path);
 
   // init detector
-  zetton::inference::InferenceRuntimeOptions detector_options;
+  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions detector_options;
   detector_options.UseTensorRTBackend();
   detector_options.UseGpu();
   detector_options.model_format =
@@ -32,11 +33,12 @@ int main(int argc, char** argv) {
   detector_options.SetCacheFileForTensorRT(detection_model_path);
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
-  detector->Init(detector_options,
+  detector->Init(&detector_options,
                  zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // init feature extractor
-  zetton::inference::InferenceRuntimeOptions extractor_options;
+  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions
+      extractor_options;
   extractor_options.UseTensorRTBackend();
   extractor_options.UseGpu();
   extractor_options.model_format =
@@ -44,7 +46,7 @@ int main(int argc, char** argv) {
   extractor_options.SetCacheFileForTensorRT(reid_model_path);
   auto extractor = std::make_shared<
       zetton::inference::vision::FastReIDTensorRTInferenceModel>();
-  extractor->Init(extractor_options);
+  extractor->Init(&extractor_options);
   extractor->params.batch_size = 1;
 
   // load image

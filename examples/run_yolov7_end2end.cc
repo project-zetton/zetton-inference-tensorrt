@@ -7,6 +7,7 @@
 #include "zetton_common/util/perf.h"
 #include "zetton_inference/vision/base/result.h"
 #include "zetton_inference/vision/util/visualize.h"
+#include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
 ABSL_FLAG(std::string, input_file, "/workspace/data/person.jpg",
@@ -22,7 +23,7 @@ int main(int argc, char** argv) {
   auto detection_model_path = absl::GetFlag(FLAGS_detection_model_path);
 
   // init options
-  zetton::inference::InferenceRuntimeOptions options;
+  zetton::inference::tensorrt::TensorRTInferenceRuntimeOptions options;
   options.UseTensorRTBackend();
   options.UseGpu();
 #if 1
@@ -40,7 +41,7 @@ int main(int argc, char** argv) {
   // init detector
   auto detector = std::make_shared<
       zetton::inference::vision::YOLOv7End2EndTensorRTInferenceModel>();
-  detector->Init(options,
+  detector->Init(&options,
                  zetton::inference::vision::YOLOEnd2EndModelType::kYOLOv7);
 
   // load image

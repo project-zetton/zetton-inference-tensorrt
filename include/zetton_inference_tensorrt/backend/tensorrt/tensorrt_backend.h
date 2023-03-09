@@ -7,6 +7,7 @@
 #include "zetton_inference/interface/base_inference_backend.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/buffers.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/common.h"
+#include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/util.h"
 
 namespace zetton {
@@ -55,7 +56,7 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
 
  public:
   /// \brief initialize TensorRT inference backend with options
-  bool Init(const InferenceRuntimeOptions& options) override;
+  bool Init(const InferenceRuntimeOptions* options) override;
   /// \brief initialize TensorRT inference backend with serialized model file
   bool InitFromSerialized(const TensorRTInferenceBackendOptions& options =
                               TensorRTInferenceBackendOptions());
