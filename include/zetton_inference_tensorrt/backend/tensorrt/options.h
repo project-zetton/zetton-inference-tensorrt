@@ -46,11 +46,14 @@ struct TensorRTInferenceRuntimeOptions : public InferenceRuntimeOptions {
       const std::string& input_name, const std::vector<int32_t>& min_shape,
       const std::vector<int32_t>& opt_shape = std::vector<int32_t>(),
       const std::vector<int32_t>& max_shape = std::vector<int32_t>());
+
   /// \brief enable half precision (FP16) for TensorRT backend
   void EnableFP16ForTensorRT();
+
   /// \brief disable half precision (FP16) and change to full precision (FP32)
   /// for TensorRT backend
   void DisableFP16ForTensorRT();
+
   /// \brief set path of cache file while using TensorRT backend
   /// \param cache_path path of cache file (serialized engine)
   void SetCacheFileForTensorRT(const std::string& cache_file_path);

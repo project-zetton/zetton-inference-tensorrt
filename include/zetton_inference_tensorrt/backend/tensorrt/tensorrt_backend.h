@@ -55,6 +55,10 @@ class TensorRTInferenceBackend : public BaseInferenceBackend {
   TensorInfo GetInputInfo(int index) override;
   /// \brief get the output tensor info
   TensorInfo GetOutputInfo(int index) override;
+  /// \brief get information of all the input tensors
+  std::vector<TensorInfo> GetInputInfos() override;
+  /// \brief get information of all the output tensors
+  std::vector<TensorInfo> GetOutputInfos() override;
 
  private:
   /// \brief get the input and output tensor info from TensorRT engine

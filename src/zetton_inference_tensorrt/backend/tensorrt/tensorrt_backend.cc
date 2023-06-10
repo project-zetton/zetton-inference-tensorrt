@@ -462,6 +462,22 @@ TensorInfo TensorRTInferenceBackend::GetOutputInfo(int index) {
   return info;
 }
 
+std::vector<TensorInfo> TensorRTInferenceBackend::GetInputInfos() {
+  std::vector<TensorInfo> infos;
+  for (size_t i = 0; i < NumInputs(); ++i) {
+    infos.emplace_back(GetInputInfo(i));
+  }
+  return infos;
+}
+
+std::vector<TensorInfo> TensorRTInferenceBackend::GetOutputInfos() {
+  std::vector<TensorInfo> infos;
+  for (size_t i = 0; i < NumOutputs(); ++i) {
+    infos.emplace_back(GetOutputInfo(i));
+  }
+  return infos;
+}
+
 ZETTON_REGISTER_INFERENCE_BACKEND(TensorRTInferenceBackend)
 
 }  // namespace inference
