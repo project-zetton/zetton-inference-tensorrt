@@ -1,8 +1,8 @@
 #include "zetton_inference_tensorrt/backend/tensorrt/tensorrt_backend.h"
 
 #include <gtest/gtest.h>
-#include <zetton_inference/base/options.h>
-#include <zetton_inference/base/type.h>
+#include <zetton_inference/core/runtime/options.h>
+#include <zetton_inference/core/type.h>
 
 TEST(TensorRTInferenceBackendTest, InitBackend) {
   auto backend =

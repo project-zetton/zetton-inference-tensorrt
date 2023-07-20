@@ -3,7 +3,7 @@
 #include <NvInfer.h>
 #include <absl/strings/str_join.h>
 #include <fmt/format.h>
-#include <zetton_inference/base/type.h>
+#include <zetton_inference/core/type.h>
 
 #include <map>
 #include <vector>

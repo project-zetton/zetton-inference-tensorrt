@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <opencv2/imgproc.hpp>
 
-#include "zetton_inference/vision/base/transform/cast.h"
-#include "zetton_inference/vision/base/transform/interpolate.h"
-#include "zetton_inference/vision/base/transform/permute.h"
+#include "zetton_inference/vision/common/transform/cast.h"
+#include "zetton_inference/vision/common/transform/interpolate.h"
+#include "zetton_inference/vision/common/transform/permute.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 
 namespace zetton {

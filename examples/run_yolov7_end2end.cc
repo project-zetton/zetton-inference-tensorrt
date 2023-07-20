@@ -5,7 +5,7 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include "zetton_common/util/perf.h"
-#include "zetton_inference/vision/base/result.h"
+#include "zetton_inference/vision/common/result.h"
 #include "zetton_inference/vision/util/visualize.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "zetton_inference/base/options.h"
+#include "zetton_inference/core/runtime/options.h"
 
 namespace zetton {
 namespace inference {

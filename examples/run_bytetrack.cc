@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "zetton_common/util/perf.h"
-#include "zetton_inference/vision/base/result.h"
+#include "zetton_inference/vision/common/result.h"
 #include "zetton_inference/vision/tracking/bytetrack/byte_tracker.h"
 #include "zetton_inference/vision/util/visualize.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/options.h"

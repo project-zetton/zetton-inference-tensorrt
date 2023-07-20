@@ -3,8 +3,8 @@
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
 
-#include "zetton_inference/base/options.h"
-#include "zetton_inference/interface/base_inference_backend.h"
+#include "zetton_inference/backend/base.h"
+#include "zetton_inference/core/runtime/options.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/buffers.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/common.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/options.h"

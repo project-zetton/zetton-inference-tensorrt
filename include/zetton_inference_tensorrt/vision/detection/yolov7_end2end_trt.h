@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "zetton_inference/base/type.h"
-#include "zetton_inference/interface/base_inference_model.h"
-#include "zetton_inference/vision/base/matrix.h"
-#include "zetton_inference/vision/base/result.h"
+#include "zetton_inference/core/model.h"
+#include "zetton_inference/core/type.h"
+#include "zetton_inference/vision/common/matrix.h"
+#include "zetton_inference/vision/common/result.h"
 
 namespace zetton {
 namespace inference {

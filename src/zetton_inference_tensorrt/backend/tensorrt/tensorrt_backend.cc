@@ -2,12 +2,12 @@
 
 #include <NvInfer.h>
 #include <NvInferPlugin.h>
-#include <zetton_inference/base/type.h>
+#include <zetton_inference/core/type.h>
 
 #include <fstream>
 
 #include "zetton_common/log/log.h"
-#include "zetton_inference/util/io_util.h"
+#include "zetton_inference/util/io.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/logging.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/util.h"
 

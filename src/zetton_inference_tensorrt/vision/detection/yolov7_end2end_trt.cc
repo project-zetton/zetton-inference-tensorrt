@@ -1,17 +1,17 @@
 #include "zetton_inference_tensorrt/vision/detection/yolov7_end2end_trt.h"
 
-#include <zetton_inference/base/options.h>
-#include <zetton_inference/base/type.h>
+#include <zetton_inference/core/runtime/options.h>
+#include <zetton_inference/core/type.h>
 
 #include <opencv2/imgproc.hpp>
 
-#include "zetton_inference/vision/base/result.h"
-#include "zetton_inference/vision/base/transform/cast.h"
-#include "zetton_inference/vision/base/transform/color_space_convert.h"
-#include "zetton_inference/vision/base/transform/interpolate.h"
-#include "zetton_inference/vision/base/transform/normalize.h"
-#include "zetton_inference/vision/base/transform/pad.h"
-#include "zetton_inference/vision/base/transform/permute.h"
+#include "zetton_inference/vision/common/result.h"
+#include "zetton_inference/vision/common/transform/cast.h"
+#include "zetton_inference/vision/common/transform/color_space_convert.h"
+#include "zetton_inference/vision/common/transform/interpolate.h"
+#include "zetton_inference/vision/common/transform/normalize.h"
+#include "zetton_inference/vision/common/transform/pad.h"
+#include "zetton_inference/vision/common/transform/permute.h"
 #include "zetton_inference_tensorrt/backend/tensorrt/options.h"
 
 namespace zetton {
